@@ -3,3 +3,4 @@ Werkzeug
 gunicorn
 mysql-connector-python
 python-dotenv
+bcrypt
