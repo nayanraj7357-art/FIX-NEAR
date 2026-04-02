@@ -21,8 +21,7 @@ ENV/
 .env
 config.py
 
-# Database files (sensitive data - don't upload!)
-database/*.sql
+# Database files (only block actual data dumps, not schema)
 database/*.db
 *.sqlite
 *.sqlite3
