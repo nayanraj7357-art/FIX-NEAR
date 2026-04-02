@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Technician Dashboard — FixNear</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #0a0f1e; color: #e2e8f0; }
+    .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100vh; background: linear-gradient(180deg, #111827 0%, #0a0f1e 100%); border-right: 1px solid rgba(255,255,255,.05); z-index: 100; display: flex; flex-direction: column; transition: transform .3s; }
+    .sidebar__brand { padding: 24px 24px 16px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .sidebar__brand h2 { font-size: 1.3rem; font-weight: 800; color: #fff; }
+    .sidebar__brand h2 span { color: #10b981; }
+    .sidebar__brand small { display: block; font-size: .7rem; font-weight: 500; color: #6b7280; margin-top: 2px; }
+    .sidebar__profile { padding: 20px; border-bottom: 1px solid rgba(255,255,255,.05); text-align: center; }
+    .sidebar__profile .avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 1.4rem; font-weight: 800; color: #fff; }
+    .sidebar__profile h3 { font-size: .95rem; font-weight: 700; color: #f1f5f9; }
+    .sidebar__profile .service-tag { display: inline-flex; align-items: center; gap: 5px; background: rgba(16,185,129,.12); color: #10b981; padding: 4px 12px; border-radius: 50px; font-size: .72rem; font-weight: 600; margin-top: 6px; }
+    .sidebar__profile .rating-tag { display: block; margin-top: 6px; font-size: .75rem; color: #f59e0b; }
+    .sidebar__nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+    .sidebar__nav a { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; color: #9ca3af; font-size: .88rem; font-weight: 500; text-decoration: none; transition: all .2s; margin-bottom: 4px; }
+    .sidebar__nav a:hover { background: rgba(16,185,129,.08); color: #e2e8f0; }
+    .sidebar__nav a.active { background: rgba(16,185,129,.12); color: #10b981; font-weight: 600; }
+    .sidebar__nav a i { width: 20px; text-align: center; }
+    .sidebar__nav .nav-badge { margin-left: auto; background: rgba(245,158,11,.15); color: #f59e0b; padding: 2px 8px; border-radius: 50px; font-size: .65rem; font-weight: 700; }
+    .sidebar__footer { padding: 16px; border-top: 1px solid rgba(255,255,255,.05); }
+    .sidebar__footer a { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 10px; color: #ef4444; font-size: .85rem; font-weight: 600; text-decoration: none; transition: all .2s; }
+    .sidebar__footer a:hover { background: rgba(239,68,68,.1); }
+    .main { margin-left: 260px; padding: 32px 36px; min-height: 100vh; }
+    .main__header h1 { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .main__header p { color: #6b7280; font-size: .85rem; margin-bottom: 28px; }
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 32px; }
+    .stat-box { background: linear-gradient(135deg, #111827, #0d1321); border: 1px solid rgba(255,255,255,.05); border-radius: 14px; padding: 22px; transition: transform .2s; }
+    .stat-box:hover { transform: translateY(-3px); }
+    .stat-box__icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 1rem; }
+    .stat-box__icon.green { background: rgba(16,185,129,.15); color: #10b981; }
+    .stat-box__icon.blue { background: rgba(59,130,246,.15); color: #3b82f6; }
+    .stat-box__icon.amber { background: rgba(245,158,11,.15); color: #f59e0b; }
+    .stat-box__icon.purple { background: rgba(139,92,246,.15); color: #8b5cf6; }
+    .stat-box__value { font-size: 1.6rem; font-weight: 800; color: #fff; }
+    .stat-box__label { font-size: .75rem; color: #6b7280; margin-top: 2px; }
+    .job-card { background: #111827; border: 1px solid rgba(255,255,255,.05); border-radius: 14px; padding: 22px; margin-bottom: 14px; transition: all .2s; }
+    .job-card:hover { border-color: rgba(16,185,129,.2); }
+    .job-card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .job-card__header h3 { font-size: .95rem; font-weight: 700; color: #f1f5f9; }
+    .job-card__header h3 i { margin-right: 8px; color: #10b981; }
+    .job-card__details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .job-card__detail { font-size: .82rem; color: #9ca3af; }
+    .job-card__detail strong { color: #e2e8f0; font-weight: 600; }
+    .job-card__detail i { width: 18px; color: #6b7280; margin-right: 4px; }
+    .job-card__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: .72rem; font-weight: 600; text-transform: capitalize; }
+    .badge--pending { background: rgba(245,158,11,.15); color: #f59e0b; }
+    .badge--confirmed { background: rgba(59,130,246,.15); color: #3b82f6; }
+    .badge--in_progress { background: rgba(139,92,246,.15); color: #8b5cf6; }
+    .badge--completed { background: rgba(16,185,129,.15); color: #10b981; }
+    .badge--cancelled { background: rgba(239,68,68,.15); color: #ef4444; }
+    .btn-s { padding: 6px 14px; font-size: .78rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: all .2s; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; }
+    .btn-green { background: rgba(16,185,129,.15); color: #10b981; }
+    .btn-green:hover { background: #10b981; color: #fff; }
+    .btn-blue { background: rgba(59,130,246,.15); color: #3b82f6; }
+    .btn-blue:hover { background: #3b82f6; color: #fff; }
+    .btn-purple { background: rgba(139,92,246,.15); color: #8b5cf6; }
+    .btn-purple:hover { background: #8b5cf6; color: #fff; }
+    .btn-red { background: rgba(239,68,68,.15); color: #ef4444; }
+    .btn-red:hover { background: #ef4444; color: #fff; }
+    .review-card { background: #111827; border: 1px solid rgba(255,255,255,.05); border-radius: 12px; padding: 18px; margin-bottom: 12px; }
+    .review-card .stars { color: #f59e0b; font-size: .9rem; margin-bottom: 6px; }
+    .review-card h4 { font-size: .88rem; font-weight: 600; color: #f1f5f9; margin-bottom: 4px; }
+    .review-card .date { font-size: .72rem; color: #6b7280; margin-bottom: 8px; }
+    .review-card p { font-size: .83rem; color: #9ca3af; line-height: 1.5; }
+    .empty-state { text-align: center; padding: 50px 20px; color: #4b5563; }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 12px; opacity: .3; }
+    .empty-state p { font-size: .88rem; }
+    .alert-bar { padding: 12px 18px; border-radius: 10px; margin-bottom: 16px; font-size: .85rem; font-weight: 500; }
+    .alert-bar.success { background: rgba(16,185,129,.1); color: #10b981; border: 1px solid rgba(16,185,129,.2); }
+    .alert-bar.error { background: rgba(239,68,68,.1); color: #ef4444; border: 1px solid rgba(239,68,68,.2); }
+    .hamburger-tech { display: none; position: fixed; top: 16px; left: 16px; z-index: 200; background: #111827; border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 10px 12px; cursor: pointer; color: #e2e8f0; font-size: 1.2rem; }
+    @media (max-width: 900px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main { margin-left: 0; padding: 24px 16px; padding-top: 70px; } .hamburger-tech { display: block; } .stats-row { grid-template-columns: repeat(2, 1fr); } .job-card__details { grid-template-columns: 1fr; } }
+    @media (max-width: 500px) { .stats-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <button class="hamburger-tech" onclick="document.querySelector('.sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+
+  <aside class="sidebar">
+    <div class="sidebar__brand"><h2>Fix<span>Near</span></h2><small>Technician Panel</small></div>
+    <div class="sidebar__profile">
+      <div class="avatar">{{ user.name[0]|upper }}</div>
+      <h3>{{ user.name }}</h3>
+      <span class="service-tag"><i class="fas {{ tech_profile.service_icon }}"></i> {{ tech_profile.service_name }}</span>
+      <span class="rating-tag">★ {{ '%.1f'|format(avg_rating|float) }} Rating · {{ tech_profile.experience_years }} yrs exp</span>
+    </div>
+    <nav class="sidebar__nav">
+      <a href="#" class="active" data-tab="overview"><i class="fas fa-chart-pie"></i> Overview</a>
+      <a href="#" data-tab="jobs"><i class="fas fa-briefcase"></i> My Jobs {% if active_jobs > 0 %}<span class="nav-badge">{{ active_jobs }}</span>{% endif %}</a>
+      <a href="#" data-tab="reviews"><i class="fas fa-star"></i> My Reviews</a>
+    </nav>
+    <div class="sidebar__footer">
+      <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="main__header">
+      <h1>Welcome, {{ user.name }} 👋</h1>
+      <p>Manage your assigned jobs and track your performance</p>
+    </div>
+    <div id="alertArea"></div>
+
+    <!-- OVERVIEW -->
+    <div class="tab-section active" id="tab-overview">
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-box__icon green"><i class="fas fa-briefcase"></i></div><div class="stat-box__value">{{ total_jobs }}</div><div class="stat-box__label">Total Jobs</div></div>
+        <div class="stat-box"><div class="stat-box__icon blue"><i class="fas fa-spinner"></i></div><div class="stat-box__value">{{ active_jobs }}</div><div class="stat-box__label">Active Jobs</div></div>
+        <div class="stat-box"><div class="stat-box__icon purple"><i class="fas fa-circle-check"></i></div><div class="stat-box__value">{{ completed_jobs }}</div><div class="stat-box__label">Completed</div></div>
+        <div class="stat-box"><div class="stat-box__icon amber"><i class="fas fa-indian-rupee-sign"></i></div><div class="stat-box__value">₹{{ '{:,.0f}'.format(earnings|float) }}</div><div class="stat-box__label">Total Earnings</div></div>
+      </div>
+
+      <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:16px;color:#f1f5f9">
+        <i class="fas fa-bolt" style="color:#10b981;margin-right:6px"></i> Active Jobs
+      </h2>
+      {% if active_list|length > 0 %}
+        {% for j in active_list %}
+          <div class="job-card">
+            <div class="job-card__header">
+              <h3><i class="fas {{ j.service_icon }}"></i> {{ j.service_name }} — #{{ j.id }}</h3>
+              <span class="badge badge--{{ j.status }}">{{ j.status|replace('_', ' ') }}</span>
+            </div>
+            <div class="job-card__details">
+              <div class="job-card__detail"><i class="fas fa-user"></i> <strong>{{ j.customer_name }}</strong></div>
+              <div class="job-card__detail"><i class="fas fa-phone"></i> {{ j.customer_phone }}</div>
+              <div class="job-card__detail"><i class="fas fa-calendar"></i> {{ j.booking_date.strftime('%d %b %Y') if j.booking_date else '' }}</div>
+              <div class="job-card__detail"><i class="fas fa-clock"></i> {{ j.time_slot }}</div>
+              <div class="job-card__detail" style="grid-column:1/3"><i class="fas fa-location-dot"></i> {{ j.address }}{{ ', ' + j.city if j.city else '' }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state"><i class="fas fa-check-circle"></i><p>No active jobs right now 🎉</p></div>
+      {% endif %}
+    </div>
+
+    <!-- ALL JOBS -->
+    <div class="tab-section" id="tab-jobs">
+      <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:16px;color:#f1f5f9">
+        <i class="fas fa-briefcase" style="color:#10b981;margin-right:6px"></i> All Assigned Jobs
+      </h2>
+      {% if all_bookings|length > 0 %}
+        {% for j in all_bookings %}
+          <div class="job-card">
+            <div class="job-card__header">
+              <h3><i class="fas {{ j.service_icon }}"></i> {{ j.service_name }} — #{{ j.id }}</h3>
+              <span class="badge badge--{{ j.status }}">{{ j.status|replace('_', ' ') }}</span>
+            </div>
+            <div class="job-card__details">
+              <div class="job-card__detail"><i class="fas fa-user"></i> <strong>{{ j.customer_name }}</strong></div>
+              <div class="job-card__detail"><i class="fas fa-phone"></i> <a href="tel:{{ j.customer_phone }}" style="color:#10b981;text-decoration:none">{{ j.customer_phone }}</a></div>
+              <div class="job-card__detail"><i class="fas fa-calendar"></i> {{ j.booking_date.strftime('%d %b %Y') if j.booking_date else '' }}</div>
+              <div class="job-card__detail"><i class="fas fa-clock"></i> {{ j.time_slot }}</div>
+              <div class="job-card__detail"><i class="fas fa-location-dot"></i> {{ j.address }}{{ ', ' + j.city if j.city else '' }}</div>
+              <div class="job-card__detail"><i class="fas fa-indian-rupee-sign"></i> <strong>₹{{ '{:,.0f}'.format(j.total_price) }}</strong></div>
+            </div>
+            {% if j.notes %}
+              <div style="font-size:.8rem;color:#6b7280;margin-bottom:12px;padding:8px 12px;background:rgba(255,255,255,.02);border-radius:8px">
+                <i class="fas fa-sticky-note" style="margin-right:4px"></i> {{ j.notes }}
+              </div>
+            {% endif %}
+            <div class="job-card__actions">
+              {% if j.status == 'pending' %}
+                <button class="btn-s btn-blue" onclick="updateJob({{ j.id }}, 'confirmed')"><i class="fas fa-check"></i> Accept</button>
+                <button class="btn-s btn-red" onclick="updateJob({{ j.id }}, 'cancelled')"><i class="fas fa-times"></i> Decline</button>
+              {% elif j.status == 'confirmed' %}
+                <button class="btn-s btn-purple" onclick="updateJob({{ j.id }}, 'in_progress')"><i class="fas fa-play"></i> Start Work</button>
+              {% elif j.status == 'in_progress' %}
+                <button class="btn-s btn-green" onclick="updateJob({{ j.id }}, 'completed')"><i class="fas fa-check-double"></i> Mark Complete</button>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state"><i class="fas fa-briefcase"></i><p>No jobs assigned yet</p></div>
+      {% endif %}
+    </div>
+
+    <!-- MY REVIEWS -->
+    <div class="tab-section" id="tab-reviews">
+      <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:16px;color:#f1f5f9">
+        <i class="fas fa-star" style="color:#f59e0b;margin-right:6px"></i> Customer Reviews
+      </h2>
+      {% if my_reviews|length > 0 %}
+        {% for r in my_reviews %}
+          <div class="review-card">
+            <div class="stars">{% for i in range(5) %}{{ '★' if i < r.rating else '☆' }}{% endfor %}</div>
+            <h4>{{ r.customer_name }}</h4>
+            <div class="date">{{ r.created_at.strftime('%d %b %Y') if r.created_at else '' }}</div>
+            <p>{{ r.comment if r.comment else '<em style="color:#4b5563">No comment</em>'|safe }}</p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state"><i class="fas fa-star"></i><p>No reviews yet</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <script>
+    document.querySelectorAll('.sidebar__nav a[data-tab]').forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        const tab = link.dataset.tab;
+        document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.sidebar__nav a').forEach(a => a.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        link.classList.add('active');
+        document.querySelector('.sidebar').classList.remove('open');
+      });
+    });
+
+    function showAlert(msg, type='success') {
+      const area = document.getElementById('alertArea');
+      area.innerHTML = `<div class="alert-bar ${type}">${msg}</div>`;
+      setTimeout(() => area.innerHTML = '', 4000);
+    }
+
+    function updateJob(bookingId, status) {
+      const labels = { confirmed: 'accept', in_progress: 'start', completed: 'complete', cancelled: 'decline' };
+      if (!confirm(`Are you sure you want to ${labels[status] || status} this job?`)) return;
+      fetch('{{ url_for("api_update_job") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `booking_id=${bookingId}&status=${status}`
+      }).then(r=>r.json()).then(data => {
+        showAlert(data.message, data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 800);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book a Service — FixNear</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    .booking-page { padding-top: 100px; min-height: 100vh; background: var(--off-white); }
+    .booking-page .container { max-width: 720px; }
+    .booking-card {
+      background: var(--white); border-radius: var(--radius-xl); padding: 40px 36px;
+      box-shadow: var(--shadow-lg); border: 1px solid rgba(226,232,240,.5);
+    }
+    .booking-card h1 { font-size: 1.6rem; font-weight: 800; color: var(--dark); margin-bottom: 6px; }
+    .booking-card > p { color: var(--text-muted); font-size: .9rem; margin-bottom: 30px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group select {
+      width: 100%; padding: 13px 16px 13px 46px; border: 1.5px solid var(--light-gray);
+      border-radius: var(--radius-md); font-size: .92rem; font-family: inherit;
+      color: var(--text-primary); background: var(--off-white); transition: var(--transition-fast);
+      outline: none; appearance: none; cursor: pointer;
+    }
+    .form-group select:focus { border-color: var(--primary); background: var(--white); box-shadow: 0 0 0 4px rgba(26,86,219,.1); }
+    .form-group textarea {
+      width: 100%; padding: 13px 16px; border: 1.5px solid var(--light-gray);
+      border-radius: var(--radius-md); font-size: .92rem; font-family: inherit;
+      color: var(--text-primary); background: var(--off-white); resize: vertical; min-height: 80px;
+      outline: none; transition: var(--transition-fast);
+    }
+    .form-group textarea:focus { border-color: var(--primary); background: var(--white); box-shadow: 0 0 0 4px rgba(26,86,219,.1); }
+    .service-price {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(26,86,219,.06); color: var(--primary); padding: 8px 18px;
+      border-radius: var(--radius-full); font-size: .88rem; font-weight: 700; margin-bottom: 20px;
+    }
+    .alert { padding: 14px 20px; border-radius: var(--radius-md); margin-bottom: 20px; font-size: .88rem; font-weight: 500; }
+    .alert--error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .alert i { margin-right: 6px; }
+    @media (max-width: 768px) {
+      .form-row { grid-template-columns: 1fr; }
+      .booking-card { padding: 28px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar scrolled" id="navbar">
+    <div class="container">
+      <a href="{{ url_for('home') }}" class="navbar__logo">Fix<span>Near</span></a>
+      <div class="navbar__links" id="navLinks">
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('user_dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('book_service') }}" class="active">Book Service</a>
+        <a href="{{ url_for('logout') }}" class="btn-login" style="color:#dc2626;border-color:#dc2626">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </div>
+      <button class="navbar__hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <section class="booking-page">
+    <div class="container">
+      <div class="booking-card">
+        <h1><i class="fas fa-calendar-check" style="color:var(--primary)"></i> Book a Service</h1>
+        <p>Fill in the details below and we'll assign a verified professional for you.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="alert alert--{{ category }}"><i class="fas fa-exclamation-circle"></i> {{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+
+        <div id="priceDisplay" class="service-price" style="display:none">
+          <i class="fas fa-tag"></i> Service Price: ₹<span id="priceValue">0</span>
+        </div>
+
+        <form action="{{ url_for('api_book_service') }}" method="POST" novalidate id="bookingForm">
+          <div class="form-group">
+            <label for="service_id">Select Service</label>
+            <div class="input-wrapper">
+              <i class="fas fa-th-large"></i>
+              <select name="service_id" id="service_id" required onchange="updatePrice()">
+                <option value="">— Choose a service —</option>
+                {% for s in services %}
+                  <option value="{{ s.id }}" data-price="{{ s.price }}"
+                    {{ 'selected' if selected_service_id|string == s.id|string else '' }}>
+                    {{ s.name }} — ₹{{ '{:,.0f}'.format(s.price) }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="booking_date">Preferred Date</label>
+              <div class="input-wrapper">
+                <i class="fas fa-calendar"></i>
+                <input type="date" id="booking_date" name="booking_date" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="time_slot">Time Slot</label>
+              <div class="input-wrapper">
+                <i class="fas fa-clock"></i>
+                <select name="time_slot" id="time_slot" required>
+                  <option value="">— Select time —</option>
+                  <option value="9:00 AM - 11:00 AM">9:00 AM - 11:00 AM</option>
+                  <option value="11:00 AM - 1:00 PM">11:00 AM - 1:00 PM</option>
+                  <option value="2:00 PM - 4:00 PM">2:00 PM - 4:00 PM</option>
+                  <option value="4:00 PM - 6:00 PM">4:00 PM - 6:00 PM</option>
+                  <option value="6:00 PM - 8:00 PM">6:00 PM - 8:00 PM</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="address">Full Address</label>
+            <textarea name="address" id="address" placeholder="House/Flat No, Street, Landmark..." required></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="city">City</label>
+              <div class="input-wrapper">
+                <i class="fas fa-location-dot"></i>
+                <input type="text" id="city" name="city" placeholder="e.g. New Delhi">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="phone">Contact Phone</label>
+              <div class="input-wrapper">
+                <i class="fas fa-phone"></i>
+                <input type="tel" id="phone" name="phone" placeholder="+91 98765 43210" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Additional Notes (Optional)</label>
+            <textarea name="notes" id="notes" placeholder="Any specific instructions..." rows="2"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:8px">
+            <i class="fas fa-check-circle"></i> Confirm Booking
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <script>
+    // Set min date to today
+    document.getElementById('booking_date').min = new Date().toISOString().split('T')[0];
+
+    function updatePrice() {
+      const sel = document.getElementById('service_id');
+      const opt = sel.options[sel.selectedIndex];
+      const price = opt.dataset.price;
+      const display = document.getElementById('priceDisplay');
+      if (price) {
+        document.getElementById('priceValue').textContent = parseFloat(price).toLocaleString();
+        display.style.display = 'inline-flex';
+      } else {
+        display.style.display = 'none';
+      }
+    }
+    updatePrice();
+
+    // Handle form submission via AJAX
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      fetch('{{ url_for("api_book_service") }}', {
+        method: 'POST',
+        body: new URLSearchParams(fd)
+      }).then(r => r.json()).then(data => {
+        if (data.success) {
+          alert(data.message);
+          window.location.href = '{{ url_for("user_dashboard") }}';
+        } else {
+          alert(data.message);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

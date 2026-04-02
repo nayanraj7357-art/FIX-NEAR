@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="FixNear — Book trusted home services near you. Electricians, Plumbers, AC Repair, Carpenters & Painters at your doorstep.">
+  <title>FixNear — Book Trusted Home Services Near You</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+  <!-- ========== NAVBAR ========== -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="{{ url_for('home') }}" class="navbar__logo">Fix<span>Near</span></a>
+      <div class="navbar__links" id="navLinks">
+        <a href="{{ url_for('home') }}" class="active">Home</a>
+        <a href="#services">Services</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="{{ url_for('contact') }}">Contact</a>
+        <a href="{{ url_for('login') }}" class="btn-login">Login</a>
+        <a href="{{ url_for('register') }}" class="btn-register">Register</a>
+      </div>
+      <button class="navbar__hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ========== HERO ========== -->
+  <section class="hero" id="hero">
+    <div class="container">
+      <div class="hero__content">
+        <div class="hero__badge">
+          <i class="fas fa-bolt"></i> #1 Home Services Platform
+        </div>
+        <h1 class="hero__title">
+          Book Trusted<br><span>Home Services</span><br>Near You
+        </h1>
+        <p class="hero__subtitle">
+          From electricians to painters — get verified professionals at your doorstep in minutes. Fast, reliable, and affordable.
+        </p>
+        <div class="hero__actions">
+          <a href="#services" class="btn btn-primary btn-lg">
+            <i class="fas fa-calendar-check"></i> Book a Service
+          </a>
+          <a href="#how-it-works" class="btn btn-outline btn-lg">
+            <i class="fas fa-play-circle"></i> How It Works
+          </a>
+        </div>
+      </div>
+
+      <div class="hero__visual">
+        <div class="hero__illustration">
+          <div class="hero__illustration-card">
+            <div class="icon-grid">
+              <div class="icon-item">
+                <i class="fas fa-bolt"></i>
+                <span>Electrician</span>
+              </div>
+              <div class="icon-item">
+                <i class="fas fa-wrench"></i>
+                <span>Plumber</span>
+              </div>
+              <div class="icon-item">
+                <i class="fas fa-snowflake"></i>
+                <span>AC Repair</span>
+              </div>
+              <div class="icon-item">
+                <i class="fas fa-hammer"></i>
+                <span>Carpenter</span>
+              </div>
+              <div class="icon-item">
+                <i class="fas fa-paint-roller"></i>
+                <span>Painter</span>
+              </div>
+              <div class="icon-item">
+                <i class="fas fa-ellipsis-h"></i>
+                <span>More</span>
+              </div>
+            </div>
+            <span class="card-badge"><i class="fas fa-shield-halved"></i>&nbsp; All Verified Professionals</span>
+          </div>
+        </div>
+
+        <div class="hero__float hero__float--1">
+          <i class="fas fa-star" style="color:#f59e0b"></i>
+          <div>
+            <strong>4.9★</strong>
+            <small style="display:block;color:#64748b;font-size:.72rem">12k+ Reviews</small>
+          </div>
+        </div>
+        <div class="hero__float hero__float--2">
+          <i class="fas fa-check-circle" style="color:#10b981"></i>
+          <div>
+            <strong>50k+</strong>
+            <small style="display:block;color:#64748b;font-size:.72rem">Jobs Done</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== SERVICES ========== -->
+  <section class="services section--center" id="services">
+    <div class="container">
+      <span class="section__badge reveal"><i class="fas fa-th-large"></i> Our Services</span>
+      <h2 class="section__title reveal">Professional Services at Your Doorstep</h2>
+      <p class="section__subtitle reveal">Choose from a wide range of home services delivered by skilled and verified professionals.</p>
+
+      <div class="services__grid">
+        <a href="{{ url_for('book_service', service_id=1) }}" class="service-card reveal" style="text-decoration:none;color:inherit">
+          <div class="service-card__icon"><i class="fas fa-bolt"></i></div>
+          <h3 class="service-card__title">Electrician</h3>
+          <p class="service-card__desc">Wiring, switches, repairs & installations</p>
+        </a>
+        <a href="{{ url_for('book_service', service_id=2) }}" class="service-card reveal" style="text-decoration:none;color:inherit">
+          <div class="service-card__icon"><i class="fas fa-wrench"></i></div>
+          <h3 class="service-card__title">Plumber</h3>
+          <p class="service-card__desc">Pipe fixing, leakage repair & fittings</p>
+        </a>
+        <a href="{{ url_for('book_service', service_id=3) }}" class="service-card reveal" style="text-decoration:none;color:inherit">
+          <div class="service-card__icon"><i class="fas fa-snowflake"></i></div>
+          <h3 class="service-card__title">AC Repair</h3>
+          <p class="service-card__desc">Servicing, gas refill & installation</p>
+        </a>
+        <a href="{{ url_for('book_service', service_id=4) }}" class="service-card reveal" style="text-decoration:none;color:inherit">
+          <div class="service-card__icon"><i class="fas fa-hammer"></i></div>
+          <h3 class="service-card__title">Carpenter</h3>
+          <p class="service-card__desc">Furniture repair, door fixing & woodwork</p>
+        </a>
+        <a href="{{ url_for('book_service', service_id=5) }}" class="service-card reveal" style="text-decoration:none;color:inherit">
+          <div class="service-card__icon"><i class="fas fa-paint-roller"></i></div>
+          <h3 class="service-card__title">Painter</h3>
+          <p class="service-card__desc">Wall painting, waterproofing & design</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== HOW IT WORKS ========== -->
+  <section class="how-it-works section--center" id="how-it-works">
+    <div class="container">
+      <span class="section__badge reveal"><i class="fas fa-route"></i> How It Works</span>
+      <h2 class="section__title reveal">Get It Done in 3 Simple Steps</h2>
+      <p class="section__subtitle reveal">Booking a trusted professional has never been this easy.</p>
+
+      <div class="how-it-works__steps">
+        <div class="step-card reveal">
+          <div class="step-card__number">1</div>
+          <div class="step-card__icon"><i class="fas fa-calendar-plus"></i></div>
+          <h3 class="step-card__title">Book a Service</h3>
+          <p class="step-card__desc">Choose your service, pick a date & time, and confirm your booking in seconds.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-card__number">2</div>
+          <div class="step-card__icon"><i class="fas fa-user-check"></i></div>
+          <h3 class="step-card__title">Technician Arrives</h3>
+          <p class="step-card__desc">A verified professional reaches your doorstep at the scheduled time.</p>
+        </div>
+        <div class="step-card reveal">
+          <div class="step-card__number">3</div>
+          <div class="step-card__icon"><i class="fas fa-circle-check"></i></div>
+          <h3 class="step-card__title">Job Completed</h3>
+          <p class="step-card__desc">Sit back and relax. Pay only after the job is done to your satisfaction.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FEATURES ========== -->
+  <section class="features section--center" id="features">
+    <div class="container">
+      <span class="section__badge reveal"><i class="fas fa-gem"></i> Why FixNear</span>
+      <h2 class="section__title reveal">Built for Trust & Convenience</h2>
+      <p class="section__subtitle reveal">Everything you need for a hassle-free home service experience.</p>
+
+      <div class="features__grid">
+        <div class="feature-card reveal">
+          <div class="feature-card__icon"><i class="fas fa-shield-halved"></i></div>
+          <h3 class="feature-card__title">Verified Technicians</h3>
+          <p class="feature-card__desc">Every professional is background-checked, trained, and rated by real customers.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-card__icon"><i class="fas fa-rocket"></i></div>
+          <h3 class="feature-card__title">Fast Booking</h3>
+          <p class="feature-card__desc">Book any service in under 60 seconds. Get instant confirmation and ETA.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-card__icon"><i class="fas fa-tags"></i></div>
+          <h3 class="feature-card__title">Affordable Prices</h3>
+          <p class="feature-card__desc">Transparent pricing with no hidden charges. Pay only for what you get.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-card__icon"><i class="fas fa-headset"></i></div>
+          <h3 class="feature-card__title">24/7 Support</h3>
+          <p class="feature-card__desc">Our support team is available around the clock to help you with anything.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-card__icon"><i class="fas fa-rotate-left"></i></div>
+          <h3 class="feature-card__title">Satisfaction Guarantee</h3>
+          <p class="feature-card__desc">Not satisfied? We'll re-do the service or give you a full refund.</p>
+        </div>
+        <div class="feature-card reveal">
+          <div class="feature-card__icon"><i class="fas fa-lock"></i></div>
+          <h3 class="feature-card__title">Secure Payments</h3>
+          <p class="feature-card__desc">Multiple payment options with industry-standard encryption for every transaction.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CTA ========== -->
+  <section class="cta section--center" id="cta">
+    <div class="container">
+      <h2 class="section__title reveal">Ready to Get Things Fixed?</h2>
+      <p class="section__subtitle reveal">Join thousands of happy customers who trust FixNear for all their home service needs.</p>
+      <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg reveal">
+        <i class="fas fa-arrow-right"></i> Book a Service Now
+      </a>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer" id="footer">
+    <div class="container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <div class="footer__brand-name">Fix<span>Near</span></div>
+          <p class="footer__brand-desc">Your trusted partner for reliable home services. We connect you with verified professionals across all categories.</p>
+          <div class="footer__socials">
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          </div>
+        </div>
+        <div class="footer__col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#features">Features</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>Services</h4>
+          <ul>
+            <li><a href="#">Electrician</a></li>
+            <li><a href="#">Plumber</a></li>
+            <li><a href="#">AC Repair</a></li>
+            <li><a href="#">Carpenter</a></li>
+            <li><a href="#">Painter</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h4>Contact Us</h4>
+          <ul>
+            <li><a href="mailto:support@fixnear.com"><i class="fas fa-envelope"></i> support@fixnear.com</a></li>
+            <li><a href="tel:+911234567890"><i class="fas fa-phone"></i> +91 12345 67890</a></li>
+            <li><a href="#"><i class="fas fa-location-dot"></i> New Delhi, India</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        &copy; 2026 <span>FixNear</span>. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

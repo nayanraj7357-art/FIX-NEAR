@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — FixNear</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #0f172a; color: #e2e8f0; }
+    .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100vh; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border-right: 1px solid rgba(255,255,255,.06); z-index: 100; display: flex; flex-direction: column; transition: transform .3s; }
+    .sidebar__brand { padding: 24px 24px 20px; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 1.4rem; font-weight: 800; color: #fff; }
+    .sidebar__brand span { color: #3b82f6; }
+    .sidebar__brand small { display: block; font-size: .7rem; font-weight: 500; color: #64748b; margin-top: 2px; }
+    .sidebar__nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+    .sidebar__nav a { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; color: #94a3b8; font-size: .88rem; font-weight: 500; text-decoration: none; transition: all .2s; margin-bottom: 4px; }
+    .sidebar__nav a:hover { background: rgba(59,130,246,.1); color: #e2e8f0; }
+    .sidebar__nav a.active { background: rgba(59,130,246,.15); color: #3b82f6; font-weight: 600; }
+    .sidebar__nav a i { width: 20px; text-align: center; font-size: .95rem; }
+    .sidebar__nav .nav-label { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #475569; padding: 16px 16px 8px; }
+    .sidebar__footer { padding: 16px; border-top: 1px solid rgba(255,255,255,.06); }
+    .sidebar__footer a { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 10px; color: #ef4444; font-size: .85rem; font-weight: 600; text-decoration: none; transition: all .2s; }
+    .sidebar__footer a:hover { background: rgba(239,68,68,.1); }
+    .main { margin-left: 260px; padding: 32px 36px; min-height: 100vh; }
+    .main__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .main__header h1 { font-size: 1.6rem; font-weight: 800; color: #fff; }
+    .main__header p { color: #64748b; font-size: .85rem; margin-top: 2px; }
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 32px; }
+    .stat-box { background: linear-gradient(135deg, #1e293b, #1a2332); border: 1px solid rgba(255,255,255,.06); border-radius: 16px; padding: 24px; transition: transform .2s; }
+    .stat-box:hover { transform: translateY(-3px); }
+    .stat-box__icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; font-size: 1.1rem; }
+    .stat-box__icon.blue { background: rgba(59,130,246,.15); color: #3b82f6; }
+    .stat-box__icon.green { background: rgba(16,185,129,.15); color: #10b981; }
+    .stat-box__icon.purple { background: rgba(139,92,246,.15); color: #8b5cf6; }
+    .stat-box__icon.amber { background: rgba(245,158,11,.15); color: #f59e0b; }
+    .stat-box__value { font-size: 1.8rem; font-weight: 800; color: #fff; }
+    .stat-box__label { font-size: .78rem; color: #64748b; margin-top: 2px; }
+    .data-table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 12px; overflow: hidden; }
+    .data-table th { background: #0f172a; color: #64748b; padding: 14px 16px; text-align: left; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+    .data-table td { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.04); font-size: .85rem; color: #cbd5e1; }
+    .data-table tr:hover td { background: rgba(255,255,255,.02); }
+    .data-table tr:last-child td { border: none; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: .72rem; font-weight: 600; text-transform: capitalize; }
+    .badge--pending { background: rgba(245,158,11,.15); color: #f59e0b; }
+    .badge--confirmed { background: rgba(59,130,246,.15); color: #3b82f6; }
+    .badge--in_progress { background: rgba(139,92,246,.15); color: #8b5cf6; }
+    .badge--completed { background: rgba(16,185,129,.15); color: #10b981; }
+    .badge--cancelled { background: rgba(239,68,68,.15); color: #ef4444; }
+    .badge--active { background: rgba(16,185,129,.15); color: #10b981; }
+    .badge--inactive { background: rgba(239,68,68,.15); color: #ef4444; }
+    .badge--available { background: rgba(16,185,129,.15); color: #10b981; }
+    .badge--busy { background: rgba(245,158,11,.15); color: #f59e0b; }
+    .badge--offline { background: rgba(239,68,68,.15); color: #ef4444; }
+    .badge--admin { background: rgba(239,68,68,.15); color: #ef4444; }
+    .badge--user { background: rgba(59,130,246,.15); color: #3b82f6; }
+    .badge--technician { background: rgba(139,92,246,.15); color: #8b5cf6; }
+    .badge--unread { background: rgba(245,158,11,.15); color: #f59e0b; }
+    .badge--read { background: rgba(16,185,129,.15); color: #10b981; }
+    .btn-s { padding: 5px 12px; font-size: .75rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: all .2s; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-blue { background: rgba(59,130,246,.15); color: #3b82f6; }
+    .btn-blue:hover { background: #3b82f6; color: #fff; }
+    .btn-green { background: rgba(16,185,129,.15); color: #10b981; }
+    .btn-green:hover { background: #10b981; color: #fff; }
+    .btn-red { background: rgba(239,68,68,.15); color: #ef4444; }
+    .btn-red:hover { background: #ef4444; color: #fff; }
+    .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .section-head h2 { font-size: 1.2rem; font-weight: 700; color: #f1f5f9; }
+    .section-head h2 i { margin-right: 8px; opacity: .6; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); z-index: 999; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal-box { background: #1e293b; border: 1px solid rgba(255,255,255,.08); border-radius: 18px; padding: 32px; max-width: 500px; width: 92%; max-height: 85vh; overflow-y: auto; }
+    .modal-box h3 { font-size: 1.1rem; font-weight: 700; color: #f1f5f9; margin-bottom: 20px; }
+    .modal-box .form-group { margin-bottom: 16px; }
+    .modal-box label { font-size: .8rem; font-weight: 600; color: #94a3b8; display: block; margin-bottom: 6px; }
+    .modal-box input, .modal-box select, .modal-box textarea { width: 100%; padding: 10px 14px; background: #0f172a; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; color: #e2e8f0; font-size: .88rem; font-family: inherit; outline: none; }
+    .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus { border-color: #3b82f6; }
+    .modal-box textarea { resize: vertical; min-height: 70px; }
+    .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-btns button { flex: 1; padding: 10px; border: none; border-radius: 10px; font-weight: 700; font-size: .88rem; cursor: pointer; font-family: inherit; }
+    .modal-btns .btn-save { background: #3b82f6; color: #fff; }
+    .modal-btns .btn-save:hover { background: #2563eb; }
+    .modal-btns .btn-cancel { background: rgba(255,255,255,.06); color: #94a3b8; }
+    .modal-btns .btn-cancel:hover { background: rgba(255,255,255,.1); }
+    .stars { color: #f59e0b; font-size: .85rem; }
+    .alert-bar { padding: 12px 18px; border-radius: 10px; margin-bottom: 16px; font-size: .85rem; font-weight: 500; }
+    .alert-bar.success { background: rgba(16,185,129,.1); color: #10b981; border: 1px solid rgba(16,185,129,.2); }
+    .alert-bar.error { background: rgba(239,68,68,.1); color: #ef4444; border: 1px solid rgba(239,68,68,.2); }
+    .hamburger-admin { display: none; position: fixed; top: 16px; left: 16px; z-index: 200; background: #1e293b; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: 10px 12px; cursor: pointer; color: #e2e8f0; font-size: 1.2rem; }
+    @media (max-width: 900px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main { margin-left: 0; padding: 24px 16px; padding-top: 70px; } .hamburger-admin { display: block; } .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .stats-row { grid-template-columns: 1fr; } }
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,.06); }
+    .msg-card { background: #0f172a; border: 1px solid rgba(255,255,255,.04); border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+    .msg-card.unread { border-left: 3px solid #f59e0b; }
+    .msg-card h4 { font-size: .9rem; color: #f1f5f9; margin-bottom: 4px; }
+    .msg-card .meta { font-size: .75rem; color: #64748b; margin-bottom: 8px; }
+    .msg-card p { font-size: .85rem; color: #94a3b8; line-height: 1.5; }
+    .review-card { background: #0f172a; border: 1px solid rgba(255,255,255,.04); border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+    .review-card .review-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .review-card .review-head h4 { font-size: .9rem; color: #f1f5f9; }
+    .review-card .meta { font-size: .75rem; color: #64748b; margin-bottom: 8px; }
+    .review-card p { font-size: .85rem; color: #94a3b8; line-height: 1.5; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #475569; }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 12px; opacity: .3; }
+    .empty-state p { font-size: .88rem; }
+    .status-select { padding: 4px 8px; background: #0f172a; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; color: #cbd5e1; font-size: .78rem; font-family: inherit; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <button class="hamburger-admin" onclick="document.querySelector('.sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand">Fix<span>Near</span><small>Admin Panel</small></div>
+    <nav class="sidebar__nav">
+      <div class="nav-label">Main</div>
+      <a href="#" class="active" data-tab="overview"><i class="fas fa-chart-pie"></i> Overview</a>
+      <a href="#" data-tab="bookings"><i class="fas fa-calendar-check"></i> Bookings <span class="badge badge--pending" style="margin-left:auto;font-size:.65rem">{{ pending_bookings }}</span></a>
+      <div class="nav-label">Management</div>
+      <a href="#" data-tab="services"><i class="fas fa-th-large"></i> Services</a>
+      <a href="#" data-tab="technicians"><i class="fas fa-user-gear"></i> Technicians</a>
+      <a href="#" data-tab="users"><i class="fas fa-users"></i> Users</a>
+      <div class="nav-label">Communication</div>
+      <a href="#" data-tab="contacts"><i class="fas fa-envelope"></i> Messages <span class="badge badge--unread" style="margin-left:auto;font-size:.65rem">{{ unread_messages }}</span></a>
+      <a href="#" data-tab="reviews"><i class="fas fa-star"></i> Reviews</a>
+    </nav>
+    <div class="sidebar__footer">
+      <a href="{{ url_for('home') }}"><i class="fas fa-globe"></i> View Website</a>
+      <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="main__header">
+      <div>
+        <h1>Welcome, {{ user.name }} 👋</h1>
+        <p>FixNear Admin Dashboard — Manage everything from here</p>
+      </div>
+    </div>
+    <div id="alertArea"></div>
+
+    <!-- OVERVIEW -->
+    <div class="tab-section active" id="tab-overview">
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-box__icon blue"><i class="fas fa-users"></i></div><div class="stat-box__value">{{ total_users }}</div><div class="stat-box__label">Total Customers</div></div>
+        <div class="stat-box"><div class="stat-box__icon green"><i class="fas fa-calendar-check"></i></div><div class="stat-box__value">{{ total_bookings }}</div><div class="stat-box__label">Total Bookings</div></div>
+        <div class="stat-box"><div class="stat-box__icon purple"><i class="fas fa-user-gear"></i></div><div class="stat-box__value">{{ total_technicians }}</div><div class="stat-box__label">Technicians</div></div>
+        <div class="stat-box"><div class="stat-box__icon amber"><i class="fas fa-indian-rupee-sign"></i></div><div class="stat-box__value">₹{{ '{:,.0f}'.format(total_revenue|float) }}</div><div class="stat-box__label">Total Revenue</div></div>
+      </div>
+      <div class="stats-row" style="grid-template-columns: repeat(3,1fr);">
+        <div class="stat-box"><div class="stat-box__icon amber"><i class="fas fa-clock"></i></div><div class="stat-box__value">{{ pending_bookings }}</div><div class="stat-box__label">Pending Bookings</div></div>
+        <div class="stat-box"><div class="stat-box__icon blue"><i class="fas fa-envelope"></i></div><div class="stat-box__value">{{ unread_messages }}</div><div class="stat-box__label">Unread Messages</div></div>
+        <div class="stat-box"><div class="stat-box__icon green"><i class="fas fa-star"></i></div><div class="stat-box__value">{{ total_reviews }}</div><div class="stat-box__label">Total Reviews</div></div>
+      </div>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div class="tab-section" id="tab-bookings">
+      <div class="section-head"><h2><i class="fas fa-calendar-check"></i> All Bookings</h2></div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>Customer</th><th>Service</th><th>Date</th><th>Time</th><th>Technician</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            {% if bookings|length > 0 %}
+              {% for b in bookings %}
+                <tr>
+                  <td>#{{ b.id }}</td>
+                  <td><strong>{{ b.user_name }}</strong><br><small style="color:#64748b">{{ b.user_phone }}</small></td>
+                  <td><i class="fas {{ b.service_icon }}" style="color:#3b82f6;margin-right:6px"></i>{{ b.service_name }}</td>
+                  <td>{{ b.booking_date.strftime('%d %b %Y') if b.booking_date else '' }}</td>
+                  <td>{{ b.time_slot }}</td>
+                  <td>{{ b.technician_name if b.technician_name else '<em style="color:#64748b">Unassigned</em>'|safe }}</td>
+                  <td><strong>₹{{ '{:,.0f}'.format(b.total_price) }}</strong></td>
+                  <td><span class="badge badge--{{ b.status }}">{{ b.status|replace('_', ' ') }}</span></td>
+                  <td>
+                    <select class="status-select" onchange="updateBookingStatus({{ b.id }}, this.value)" {{ 'disabled' if b.status in ['cancelled', 'completed'] else '' }}>
+                      {% for st in ['pending','confirmed','in_progress','completed','cancelled'] %}
+                        <option value="{{ st }}" {{ 'selected' if b.status == st else '' }}>{{ st|replace('_', ' ')|title }}</option>
+                      {% endfor %}
+                    </select>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="9" class="empty-state"><i class="fas fa-calendar-xmark"></i><p>No bookings yet</p></td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SERVICES -->
+    <div class="tab-section" id="tab-services">
+      <div class="section-head">
+        <h2><i class="fas fa-th-large"></i> Services</h2>
+        <button class="btn-s btn-blue" onclick="openAddService()"><i class="fas fa-plus"></i> Add Service</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>Icon</th><th>Name</th><th>Description</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            {% for s in services %}
+              <tr>
+                <td>#{{ s.id }}</td>
+                <td><i class="fas {{ s.icon }}" style="font-size:1.2rem;color:#3b82f6"></i></td>
+                <td><strong>{{ s.name }}</strong></td>
+                <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.description }}</td>
+                <td><strong>₹{{ '{:,.0f}'.format(s.price) }}</strong></td>
+                <td><span class="badge badge--{{ s.status }}">{{ s.status }}</span></td>
+                <td>
+                  <button class="btn-s btn-blue" onclick='editService({{ s|tojson }})'><i class="fas fa-edit"></i></button>
+                  <button class="btn-s btn-red" onclick="deleteService({{ s.id }})"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TECHNICIANS -->
+    <div class="tab-section" id="tab-technicians">
+      <div class="section-head">
+        <h2><i class="fas fa-user-gear"></i> Technicians</h2>
+        <button class="btn-s btn-blue" onclick="openAddTech()"><i class="fas fa-plus"></i> Add Technician</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>Name</th><th>Phone</th><th>Email</th><th>Service</th><th>Experience</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            {% for t in technicians %}
+              <tr>
+                <td>#{{ t.id }}</td>
+                <td><strong>{{ t.name }}</strong></td>
+                <td>{{ t.phone }}</td>
+                <td>{{ t.email }}</td>
+                <td>{{ t.service_name }}</td>
+                <td>{{ t.experience_years }} yrs</td>
+                <td><span class="stars">{{ '★' * (t.rating|round|int) }}</span> {{ t.rating }}</td>
+                <td><span class="badge badge--{{ t.status }}">{{ t.status }}</span></td>
+                <td>
+                  <button class="btn-s btn-blue" onclick='editTech({{ t|tojson }})'><i class="fas fa-edit"></i></button>
+                  <button class="btn-s btn-red" onclick="deleteTech({{ t.id }})"><i class="fas fa-trash"></i></button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="tab-section" id="tab-users">
+      <div class="section-head"><h2><i class="fas fa-users"></i> All Users</h2></div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Registered</th></tr></thead>
+          <tbody>
+            {% for u in users %}
+              <tr>
+                <td>#{{ u.id }}</td>
+                <td><strong>{{ u.name }}</strong></td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.phone }}</td>
+                <td><span class="badge badge--{{ u.role }}">{{ u.role }}</span></td>
+                <td>{{ u.created_at.strftime('%d %b %Y') if u.created_at else '' }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CONTACTS -->
+    <div class="tab-section" id="tab-contacts">
+      <div class="section-head"><h2><i class="fas fa-envelope"></i> Contact Messages</h2></div>
+      {% if contacts|length > 0 %}
+        {% for c in contacts %}
+          <div class="msg-card {{ '' if c.is_read else 'unread' }}">
+            <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:8px">
+              <div>
+                <h4>{{ c.name }} — {{ c.subject if c.subject else 'No Subject' }}</h4>
+                <div class="meta">{{ c.email }} · {{ c.created_at.strftime('%d %b %Y, %I:%M %p') if c.created_at else '' }}</div>
+              </div>
+              {% if not c.is_read %}
+                <button class="btn-s btn-green" onclick="markRead({{ c.id }}, this)"><i class="fas fa-check"></i> Mark Read</button>
+              {% else %}
+                <span class="badge badge--read">Read</span>
+              {% endif %}
+            </div>
+            <p>{{ c.message|replace('\n', '<br>'|safe) }}</p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state"><i class="fas fa-envelope-open"></i><p>No messages yet</p></div>
+      {% endif %}
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="tab-section" id="tab-reviews">
+      <div class="section-head"><h2><i class="fas fa-star"></i> Customer Reviews</h2></div>
+      {% if reviews|length > 0 %}
+        {% for r in reviews %}
+          <div class="review-card">
+            <div class="review-head">
+              <h4>{{ r.user_name }}</h4>
+              <span class="stars">{% for i in range(5) %}{{ '★' if i < r.rating else '☆' }}{% endfor %}</span>
+            </div>
+            <div class="meta">{{ r.service_name }} · Booking Date: {{ r.booking_date.strftime('%d %b %Y') if r.booking_date else '' }} · Reviewed: {{ r.created_at.strftime('%d %b %Y') if r.created_at else '' }}</div>
+            <p>{{ r.comment if r.comment else '<em style="color:#475569">No comment</em>'|safe }}</p>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state"><i class="fas fa-star"></i><p>No reviews yet</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- SERVICE MODAL -->
+  <div class="modal-overlay" id="serviceModal">
+    <div class="modal-box">
+      <h3 id="serviceModalTitle">Add New Service</h3>
+      <form id="serviceForm">
+        <input type="hidden" name="id" id="serviceId">
+        <div class="form-group"><label>Service Name</label><input type="text" name="name" id="serviceName" placeholder="e.g. Electrician" required></div>
+        <div class="form-group"><label>Icon (FontAwesome class)</label><input type="text" name="icon" id="serviceIcon" placeholder="e.g. fa-bolt" required></div>
+        <div class="form-group"><label>Description</label><textarea name="description" id="serviceDesc" placeholder="Short description"></textarea></div>
+        <div class="form-group"><label>Price (₹)</label><input type="number" name="price" id="servicePrice" placeholder="299" step="0.01" required></div>
+        <div class="form-group"><label>Status</label><select name="status" id="serviceStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+        <div class="modal-btns"><button type="submit" class="btn-save">Save Service</button><button type="button" class="btn-cancel" onclick="closeModal('serviceModal')">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TECHNICIAN MODAL -->
+  <div class="modal-overlay" id="techModal">
+    <div class="modal-box">
+      <h3 id="techModalTitle">Add New Technician</h3>
+      <form id="techForm">
+        <input type="hidden" name="id" id="techId">
+        <div class="form-group"><label>Full Name</label><input type="text" name="name" id="techName" placeholder="Full name" required></div>
+        <div class="form-group"><label>Email</label><input type="email" name="email" id="techEmail" placeholder="email@example.com" required></div>
+        <div class="form-group"><label>Phone</label><input type="tel" name="phone" id="techPhone" placeholder="98765 43210" required></div>
+        <div class="form-group"><label>Password (for login)</label><input type="password" name="password" id="techPassword" placeholder="Min 6 characters"><small style="color:#475569">Leave blank when editing to keep current password</small></div>
+        <div class="form-group">
+          <label>Service Category</label>
+          <select name="service_id" id="techServiceId" required>
+            <option value="">— Select —</option>
+            {% for srv in services_list %}
+              <option value="{{ srv.id }}">{{ srv.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group"><label>Experience (Years)</label><input type="number" name="experience_years" id="techExp" placeholder="5" min="0"></div>
+        <div class="form-group"><label>Status</label><select name="status" id="techStatus"><option value="available">Available</option><option value="busy">Busy</option><option value="offline">Offline</option></select></div>
+        <div class="modal-btns"><button type="submit" class="btn-save">Save Technician</button><button type="button" class="btn-cancel" onclick="closeModal('techModal')">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <script>
+    // Tab switching
+    document.querySelectorAll('.sidebar__nav a[data-tab]').forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        const tab = link.dataset.tab;
+        document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.sidebar__nav a').forEach(a => a.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        link.classList.add('active');
+        document.querySelector('.sidebar').classList.remove('open');
+      });
+    });
+
+    function showAlert(msg, type='success') {
+      const area = document.getElementById('alertArea');
+      area.innerHTML = `<div class="alert-bar ${type}">${msg}</div>`;
+      setTimeout(() => area.innerHTML = '', 4000);
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    // Booking status
+    function updateBookingStatus(id, status) {
+      fetch('{{ url_for("api_update_booking") }}', {
+        method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `booking_id=${id}&status=${status}`
+      }).then(r=>r.json()).then(data => {
+        showAlert(data.message, data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 800);
+      });
+    }
+
+    // Services
+    document.getElementById('serviceForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      const id = fd.get('id');
+      const url = id ? '{{ url_for("api_update_service") }}' : '{{ url_for("api_add_service") }}';
+      fetch(url, { method: 'POST', body: new URLSearchParams(fd) })
+        .then(r=>r.json()).then(data => {
+          showAlert(data.message, data.success ? 'success' : 'error');
+          if (data.success) setTimeout(() => location.reload(), 800);
+        });
+    });
+
+    function openAddService() {
+      document.getElementById('serviceModalTitle').textContent = 'Add New Service';
+      document.getElementById('serviceForm').reset();
+      document.getElementById('serviceId').value = '';
+      openModal('serviceModal');
+    }
+
+    function editService(s) {
+      document.getElementById('serviceModalTitle').textContent = 'Edit Service';
+      document.getElementById('serviceId').value = s.id;
+      document.getElementById('serviceName').value = s.name;
+      document.getElementById('serviceIcon').value = s.icon;
+      document.getElementById('serviceDesc').value = s.description || '';
+      document.getElementById('servicePrice').value = s.price;
+      document.getElementById('serviceStatus').value = s.status;
+      openModal('serviceModal');
+    }
+
+    function deleteService(id) {
+      if (!confirm('Delete this service?')) return;
+      fetch('{{ url_for("api_delete_service") }}', {
+        method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'},
+        body: 'id='+id
+      }).then(r=>r.json()).then(data => {
+        showAlert(data.message, data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 600);
+      });
+    }
+
+    // Technicians
+    document.getElementById('techForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      const id = fd.get('id');
+      const url = id ? '{{ url_for("api_update_technician") }}' : '{{ url_for("api_add_technician") }}';
+      fetch(url, { method: 'POST', body: new URLSearchParams(fd) })
+        .then(r=>r.json()).then(data => {
+          showAlert(data.message, data.success ? 'success' : 'error');
+          if (data.success) setTimeout(() => location.reload(), 800);
+        });
+    });
+
+    function openAddTech() {
+      document.getElementById('techModalTitle').textContent = 'Add New Technician';
+      document.getElementById('techForm').reset();
+      document.getElementById('techId').value = '';
+      openModal('techModal');
+    }
+
+    function editTech(t) {
+      document.getElementById('techModalTitle').textContent = 'Edit Technician';
+      document.getElementById('techId').value = t.id;
+      document.getElementById('techName').value = t.name;
+      document.getElementById('techEmail').value = t.email || '';
+      document.getElementById('techPhone').value = t.phone;
+      document.getElementById('techServiceId').value = t.service_id;
+      document.getElementById('techExp').value = t.experience_years;
+      document.getElementById('techStatus').value = t.status;
+      document.getElementById('techPassword').value = '';
+      openModal('techModal');
+    }
+
+    function deleteTech(id) {
+      if (!confirm('Delete this technician?')) return;
+      fetch('{{ url_for("api_delete_technician") }}', {
+        method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'},
+        body: 'id='+id
+      }).then(r=>r.json()).then(data => {
+        showAlert(data.message, data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 600);
+      });
+    }
+
+    // Contacts
+    function markRead(id, btn) {
+      fetch('{{ url_for("api_mark_contact_read") }}', {
+        method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'},
+        body: 'id='+id
+      }).then(r=>r.json()).then(data => {
+        if (data.success) {
+          btn.closest('.msg-card').classList.remove('unread');
+          btn.outerHTML = '<span class="badge badge--read">Read</span>';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
