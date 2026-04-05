@@ -69,18 +69,24 @@ if DB_TYPE == 'mysql':
         'autocommit': True
     }
 
+class PgConnectionWrapper:
+    """Wraps psycopg2 connection so db.cursor(dictionary=True) works like MySQL."""
+    def __init__(self, conn):
+        self._conn = conn
+    def cursor(self, dictionary=False, **kw):
+        if dictionary:
+            return self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        return self._conn.cursor(**kw)
+    def close(self):
+        self._conn.close()
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
 def get_db():
     if DB_TYPE == 'pg':
         conn = psycopg2.connect(DATABASE_URL)
         conn.autocommit = True
-        # Patch cursor so db.cursor(dictionary=True) works like MySQL
-        _orig_cursor = conn.cursor
-        def _cursor(dictionary=False, **kw):
-            if dictionary:
-                return _orig_cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            return _orig_cursor(**kw)
-        conn.cursor = _cursor
-        return conn
+        return PgConnectionWrapper(conn)
     return mysql.connector.connect(**DB_CONFIG)
 
 # ============================================
@@ -119,8 +125,8 @@ def hash_password(pw):
     return bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def check_password(pw, hashed):
-    # PHP bcrypt uses $2y$ prefix; Python bcrypt expects $2b$
-    if hashed.startswith('$2y$'):
+    # PHP bcrypt uses $2y$, PostgreSQL pgcrypto uses $2a$; Python bcrypt expects $2b$
+    if hashed.startswith('$2y$') or hashed.startswith('$2a$'):
         hashed = '$2b$' + hashed[4:]
     return bcrypt.checkpw(pw.encode('utf-8'), hashed.encode('utf-8'))
 
