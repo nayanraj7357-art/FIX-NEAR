@@ -74,17 +74,19 @@
 
         <div class="form-group">
           <label for="password">Password</label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" style="position:relative">
             <i class="fas fa-lock"></i>
             <input type="password" id="password" name="password" placeholder="Minimum 6 characters" required>
+            <i class="fas fa-eye" id="togglePw1" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);cursor:pointer;color:#94a3b8;z-index:2" onclick="togglePw('password','togglePw1')"></i>
           </div>
         </div>
 
         <div class="form-group">
           <label for="confirmPassword">Confirm Password</label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" style="position:relative">
             <i class="fas fa-lock"></i>
             <input type="password" id="confirmPassword" name="confirm_password" placeholder="Re-enter your password" required>
+            <i class="fas fa-eye" id="togglePw2" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);cursor:pointer;color:#94a3b8;z-index:2" onclick="togglePw('confirmPassword','togglePw2')"></i>
           </div>
         </div>
 
@@ -107,5 +109,13 @@
   </section>
 
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <script>
+    function togglePw(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') { input.type = 'text'; icon.classList.replace('fa-eye','fa-eye-slash'); }
+      else { input.type = 'password'; icon.classList.replace('fa-eye-slash','fa-eye'); }
+    }
+  </script>
 </body>
 </html>
