@@ -5,15 +5,24 @@ Online Home Service Booking Platform
 ============================================
 """
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_from_directory
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from functools import wraps
-import mysql.connector
 import bcrypt
 import string
 import random
 import os
 import uuid
+
+# Auto-detect database: PostgreSQL (Render) or MySQL (localhost)
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    import psycopg2
+    import psycopg2.extras
+    DB_TYPE = 'pg'
+else:
+    import mysql.connector
+    DB_TYPE = 'mysql'
 
 # ============================================
 # APP CONFIG
@@ -48,17 +57,30 @@ def save_upload(file):
 
 # ============================================
 # DATABASE CONFIG
+# Localhost → MySQL | Render → PostgreSQL (auto-detect)
 # ============================================
-DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': '',
-    'database': 'fixnear',
-    'charset': 'utf8mb4',
-    'autocommit': True
-}
+if DB_TYPE == 'mysql':
+    DB_CONFIG = {
+        'host': 'localhost',
+        'user': 'root',
+        'password': '',
+        'database': 'fixnear',
+        'charset': 'utf8mb4',
+        'autocommit': True
+    }
 
 def get_db():
+    if DB_TYPE == 'pg':
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.autocommit = True
+        # Patch cursor so db.cursor(dictionary=True) works like MySQL
+        _orig_cursor = conn.cursor
+        def _cursor(dictionary=False, **kw):
+            if dictionary:
+                return _orig_cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            return _orig_cursor(**kw)
+        conn.cursor = _cursor
+        return conn
     return mysql.connector.connect(**DB_CONFIG)
 
 # ============================================
@@ -325,9 +347,14 @@ def api_add_technician():
     cur.execute("SELECT id FROM users WHERE email=%s", (email,))
     if cur.fetchone(): db.close(); return jsonify(success=False, message='Email already registered.')
     hashed = hash_password(request.form['password'])
-    cur.execute("INSERT INTO users (name,email,phone,password,role) VALUES (%s,%s,%s,%s,'technician')",
-                (request.form['name'], email, request.form['phone'], hashed))
-    uid = cur.lastrowid
+    if DB_TYPE == 'pg':
+        cur.execute("INSERT INTO users (name,email,phone,password,role) VALUES (%s,%s,%s,%s,'technician') RETURNING id",
+                    (request.form['name'], email, request.form['phone'], hashed))
+        uid = cur.fetchone()['id']
+    else:
+        cur.execute("INSERT INTO users (name,email,phone,password,role) VALUES (%s,%s,%s,%s,'technician')",
+                    (request.form['name'], email, request.form['phone'], hashed))
+        uid = cur.lastrowid
     cur.execute("INSERT INTO technicians (user_id,name,phone,email,service_id,experience_years,status) VALUES (%s,%s,%s,%s,%s,%s,%s)",
                 (uid, request.form['name'], request.form['phone'], email, request.form['service_id'],
                  request.form.get('experience_years',0), request.form.get('status','available'))); db.close()
