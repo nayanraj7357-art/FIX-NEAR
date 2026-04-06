@@ -169,6 +169,34 @@
         </div>
       {% endif %}
 
+      <!-- Change Password Section -->
+      <div style="margin-top:40px;margin-bottom:40px">
+        <div class="section-header">
+          <h2><i class="fas fa-key" style="color:var(--primary)"></i> Change Password</h2>
+        </div>
+        <div style="background:var(--white);border-radius:var(--radius-lg);padding:32px;border:1px solid var(--light-gray);max-width:500px">
+          <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:20px">Update your account password. Use a strong password with at least 6 characters.</p>
+          <div id="pwAlertArea"></div>
+          <form id="changePwForm">
+            <div class="form-group" style="margin-bottom:16px">
+              <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:6px">Current Password</label>
+              <div class="input-wrapper"><i class="fas fa-lock"></i><input type="password" name="current_password" placeholder="Enter current password" required></div>
+            </div>
+            <div class="form-group" style="margin-bottom:16px">
+              <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:6px">New Password</label>
+              <div class="input-wrapper"><i class="fas fa-key"></i><input type="password" name="new_password" id="userNewPw" placeholder="Min 6 characters" required></div>
+            </div>
+            <div class="form-group" style="margin-bottom:20px">
+              <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:6px">Confirm New Password</label>
+              <div class="input-wrapper"><i class="fas fa-key"></i><input type="password" name="confirm_password" id="userConfirmPw" placeholder="Re-enter new password" required></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full btn-lg">
+              <i class="fas fa-key"></i> Update Password
+            </button>
+          </form>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -241,6 +269,27 @@
       }).then(r => r.json()).then(data => {
         alert(data.message);
         if (data.success) { closeReview(); location.reload(); }
+      });
+    });
+
+    // Change Password
+    document.getElementById('changePwForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newPw = document.getElementById('userNewPw').value;
+      const confirmPw = document.getElementById('userConfirmPw').value;
+      const alertArea = document.getElementById('pwAlertArea');
+      if (newPw.length < 6) { alertArea.innerHTML = '<div style="padding:12px 18px;border-radius:10px;margin-bottom:16px;font-size:.85rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5">Password must be at least 6 characters.</div>'; return; }
+      if (newPw !== confirmPw) { alertArea.innerHTML = '<div style="padding:12px 18px;border-radius:10px;margin-bottom:16px;font-size:.85rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5">New passwords do not match.</div>'; return; }
+      fetch('{{ url_for("api_change_password") }}', {
+        method: 'POST',
+        body: new URLSearchParams(new FormData(this))
+      }).then(r => r.json()).then(data => {
+        const bgColor = data.success ? '#d1fae5' : '#fee2e2';
+        const textColor = data.success ? '#065f46' : '#991b1b';
+        const borderColor = data.success ? '#6ee7b7' : '#fca5a5';
+        alertArea.innerHTML = `<div style="padding:12px 18px;border-radius:10px;margin-bottom:16px;font-size:.85rem;background:${bgColor};color:${textColor};border:1px solid ${borderColor}">${data.message}</div>`;
+        if (data.success) this.reset();
+        setTimeout(() => alertArea.innerHTML = '', 4000);
       });
     });
   </script>
