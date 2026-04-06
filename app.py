@@ -420,11 +420,21 @@ def api_update_profile():
 @app.route('/api/change_password', methods=['POST'])
 @login_required
 def api_change_password():
+    current_pw = request.form.get('current_password', '')
+    new_pw = request.form.get('new_password', '')
+    confirm_pw = request.form.get('confirm_password', '')
+    if not current_pw or not new_pw:
+        return jsonify(success=False, message='All fields are required.')
+    if len(new_pw) < 6:
+        return jsonify(success=False, message='New password must be at least 6 characters.')
+    if new_pw != confirm_pw:
+        return jsonify(success=False, message='New passwords do not match.')
     db = get_db(); cur = db.cursor(dictionary=True)
     cur.execute("SELECT password FROM users WHERE id=%s", (session['user_id'],)); u = cur.fetchone()
-    if not check_password(request.form['current_password'], u['password']): db.close(); return jsonify(success=False, message='Wrong current password.')
-    cur.execute("UPDATE users SET password=%s WHERE id=%s", (hash_password(request.form['new_password']), session['user_id'])); db.close()
-    return jsonify(success=True, message='Password changed!')
+    if not check_password(current_pw, u['password']):
+        db.close(); return jsonify(success=False, message='Wrong current password.')
+    cur.execute("UPDATE users SET password=%s WHERE id=%s", (hash_password(new_pw), session['user_id'])); db.close()
+    return jsonify(success=True, message='Password changed successfully!')
 
 @app.route('/forgot_password')
 def forgot_password():

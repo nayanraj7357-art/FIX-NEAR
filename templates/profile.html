@@ -126,6 +126,10 @@
 
     document.getElementById('passwordForm').addEventListener('submit', function(e) {
       e.preventDefault();
+      const newPw = document.getElementById('new_password').value;
+      const confirmPw = document.getElementById('confirm_password').value;
+      if (newPw.length < 6) { showProfileAlert('Password must be at least 6 characters.', 'error'); return; }
+      if (newPw !== confirmPw) { showProfileAlert('New passwords do not match.', 'error'); return; }
       fetch('{{ url_for("api_change_password") }}', {
         method: 'POST',
         body: new URLSearchParams(new FormData(this))
