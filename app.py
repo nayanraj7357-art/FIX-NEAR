@@ -13,6 +13,9 @@ import string
 import random
 import os
 import uuid
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Load .env file (local development only — on Render, env vars are set in Dashboard)
 load_dotenv()
@@ -134,6 +137,38 @@ def check_password(pw, hashed):
         hashed = '$2b$' + hashed[4:]
     return bcrypt.checkpw(pw.encode('utf-8'), hashed.encode('utf-8'))
 
+def send_otp_email(to_email, otp, subject="FixNear Verification Code"):
+    mail_user = os.environ.get('MAIL_USERNAME')
+    mail_pass = os.environ.get('MAIL_PASSWORD')
+    if not mail_user or not mail_pass:
+        print("WARNING: MAIL_USERNAME or MAIL_PASSWORD not configured. Expected OTP:", otp)
+        return False
+    msg = MIMEMultipart()
+    msg['From'] = mail_user
+    msg['To'] = to_email
+    msg['Subject'] = subject
+    body = f"""
+    <html><body>
+    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+        <h2 style="color: #3b82f6;">FixNear Verification</h2>
+        <p>Your 6-digit OTP code is:</p>
+        <div style="font-size: 24px; font-weight: bold; padding: 10px; background: #f1f5f9; text-align: center; letter-spacing: 2px;">{otp}</div>
+        <p style="color: #64748b; font-size: 12px; margin-top: 20px;">If you didn't request this, you can safely ignore this email.</p>
+    </div>
+    </body></html>
+    """
+    msg.attach(MIMEText(body, 'html'))
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(mail_user, mail_pass)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        print("Failed to send email:", e)
+        return False
+
 # ============================================
 # PUBLIC ROUTES
 # ============================================
@@ -193,14 +228,36 @@ def register():
             cur.execute("SELECT id FROM users WHERE email=%s", (email,))
             if cur.fetchone(): errors.append('Email already registered.')
             else:
-                hashed = hash_password(password)
-                cur.execute("INSERT INTO users (name,email,phone,password) VALUES (%s,%s,%s,%s)", (name,email,phone,hashed))
-                db.close(); flash('Registration successful! Please login.', 'success')
-                return redirect(url_for('login'))
+                db.close()
+                otp = ''.join(random.choices(string.digits, k=6))
+                session['reg_details'] = {'name': name, 'email': email, 'phone': phone, 'password': hash_password(password)}
+                session['reg_otp'] = otp
+                send_otp_email(email, otp, "Verify your FixNear Registration")
+                flash('An OTP has been sent to your email. Please verify to complete registration.', 'info')
+                return redirect(url_for('verify_otp'))
             db.close()
         for e in errors: flash(e, 'error')
         return redirect(url_for('register'))
     return render_template('register.html')
+
+@app.route('/verify_otp', methods=['GET', 'POST'])
+def verify_otp():
+    if 'reg_details' not in session:
+        return redirect(url_for('register'))
+    if request.method == 'POST':
+        otp = request.form.get('otp', '').strip()
+        if otp == session.get('reg_otp'):
+            details = session.pop('reg_details')
+            session.pop('reg_otp', None)
+            db = get_db(); cur = db.cursor()
+            cur.execute("INSERT INTO users (name,email,phone,password) VALUES (%s,%s,%s,%s)", 
+                        (details['name'], details['email'], details['phone'], details['password']))
+            db.close()
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('Invalid OTP. Please check your email and try again.', 'error')
+    return render_template('verify_otp.html')
 
 @app.route('/logout')
 def logout():
@@ -458,16 +515,51 @@ def reset_password():
     db = get_db(); cur = db.cursor(dictionary=True)
     cur.execute("SELECT id FROM users WHERE email=%s", (email,))
     user = cur.fetchone()
+    db.close()
     if not user:
         flash('No account found with that email.', 'error')
-        db.close(); return redirect(url_for('forgot_password'))
-    # Generate random 8-char password
-    new_pw = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-    hashed = hash_password(new_pw)
-    cur.execute("UPDATE users SET password=%s WHERE id=%s", (hashed, user['id']))
-    db.close()
-    flash(f'Your new password is: {new_pw}  — Please login and change it immediately.', 'info')
-    return redirect(url_for('forgot_password'))
+        return redirect(url_for('forgot_password'))
+    
+    otp = ''.join(random.choices(string.digits, k=6))
+    session['reset_email'] = email
+    session['reset_otp'] = otp
+    send_otp_email(email, otp, "FixNear Password Reset Verification")
+    flash('A 6-digit OTP has been sent to your email. Enter it below.', 'info')
+    return redirect(url_for('verify_reset_otp'))
+
+@app.route('/verify_reset_otp', methods=['GET', 'POST'])
+def verify_reset_otp():
+    if 'reset_email' not in session:
+        return redirect(url_for('forgot_password'))
+    if request.method == 'POST':
+        otp = request.form.get('otp', '').strip()
+        if otp == session.get('reset_otp'):
+            session['reset_verified'] = True
+            return redirect(url_for('set_new_password'))
+        flash('Invalid OTP. Please try again.', 'error')
+    return render_template('verify_reset_otp.html')
+
+@app.route('/set_new_password', methods=['GET', 'POST'])
+def set_new_password():
+    if not session.get('reset_verified'):
+        return redirect(url_for('forgot_password'))
+    if request.method == 'POST':
+        new_pw = request.form.get('new_password')
+        confirm_pw = request.form.get('confirm_password')
+        email = session.pop('reset_email', None)
+        session.pop('reset_otp', None)
+        session.pop('reset_verified', None)
+        
+        if not email or len(new_pw) < 6 or new_pw != confirm_pw:
+            flash('Error trying to set password. Try again.', 'error')
+            return redirect(url_for('forgot_password'))
+            
+        db = get_db(); cur = db.cursor()
+        cur.execute("UPDATE users SET password=%s WHERE email=%s", (hash_password(new_pw), email))
+        db.close()
+        flash('Password reset successfully! You can now log in.', 'success')
+        return redirect(url_for('login'))
+    return render_template('set_new_password.html')
 
 @app.route('/book')
 @login_required

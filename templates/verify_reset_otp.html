@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Reset OTP — FixNear</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+  <nav class="navbar scrolled" id="navbar">
+    <div class="container">
+      <a href="{{ url_for('home') }}" class="navbar__logo">Fix<span>Near</span></a>
+    </div>
+  </nav>
+
+  <section class="auth-page">
+    <div class="auth-card">
+      <div class="auth-card__logo">
+        <a href="{{ url_for('home') }}">Fix<span>Near</span></a>
+      </div>
+      <div class="auth-card__heading">
+        <h1>Password Reset</h1>
+        <p>A 6-digit OTP has been sent to your email.</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          {% if category == 'success' %}
+            <div class="alert alert--success" style="padding:14px 20px;border-radius:10px;margin-bottom:20px;font-size:.88rem;background:#d1fae5;color:#065f46;border:1px solid #6ee7b7">
+              <i class="fas fa-check-circle"></i> {{ message }}
+            </div>
+          {% elif category == 'error' %}
+            <div class="alert alert--error" style="padding:14px 20px;border-radius:10px;margin-bottom:20px;font-size:.88rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5">
+              <i class="fas fa-exclamation-circle"></i> {{ message }}
+            </div>
+          {% elif category == 'info' %}
+            <div class="alert alert--info" style="padding:14px 20px;border-radius:10px;margin-bottom:20px;font-size:.88rem;background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe">
+              <i class="fas fa-info-circle"></i> {{ message }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endwith %}
+
+      <form action="{{ url_for('verify_reset_otp') }}" method="POST" novalidate>
+        <div class="form-group">
+          <label for="otp">Enter Reset OTP</label>
+          <div class="input-wrapper">
+            <i class="fas fa-key"></i>
+            <input type="text" id="otp" name="otp" placeholder="123456" required maxlength="6" pattern="\d{6}">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg">
+          <i class="fas fa-arrow-right"></i> Verify Code
+        </button>
+      </form>
+      
+      <div class="auth-card__footer" style="margin-top: 20px;">
+        <a href="{{ url_for('forgot_password') }}">Back to Forgot Password</a>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>
