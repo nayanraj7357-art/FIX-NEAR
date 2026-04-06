@@ -396,6 +396,15 @@ def api_update_booking():
     cur.execute("UPDATE bookings SET status=%s WHERE id=%s", (request.form['status'], request.form['booking_id'])); db.close()
     return jsonify(success=True, message='Booking updated!')
 
+@app.route('/api/admin/assign_technician', methods=['POST'])
+@admin_required
+def api_assign_technician():
+    db = get_db(); cur = db.cursor()
+    tech_id = request.form.get('technician_id')
+    tech_id = tech_id if tech_id else None
+    cur.execute("UPDATE bookings SET technician_id=%s WHERE id=%s", (tech_id, request.form['booking_id'])); db.close()
+    return jsonify(success=True, message='Technician assigned!')
+
 @app.route('/api/admin/mark_contact_read', methods=['POST'])
 @admin_required
 def api_mark_contact_read():

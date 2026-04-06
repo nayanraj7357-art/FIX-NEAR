@@ -174,7 +174,16 @@
                   <td><i class="fas {{ b.service_icon }}" style="color:#3b82f6;margin-right:6px"></i>{{ b.service_name }}</td>
                   <td>{{ b.booking_date.strftime('%d %b %Y') if b.booking_date else '' }}</td>
                   <td>{{ b.time_slot }}</td>
-                  <td>{{ b.technician_name if b.technician_name else '<em style="color:#64748b">Unassigned</em>'|safe }}</td>
+                  <td>
+                    <select class="status-select" style="max-width:130px; border-color: rgba(59,130,246,.5);" onchange="assignTechnician({{ b.id }}, this.value)" {{ 'disabled' if b.status in ['cancelled', 'completed'] else '' }}>
+                      <option value="">-- Unassigned --</option>
+                      {% for tech in technicians %}
+                        {% if tech.service_id == b.service_id %}
+                          <option value="{{ tech.id }}" {{ 'selected' if b.technician_id == tech.id else '' }}>{{ tech.name }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                  </td>
                   <td><strong>₹{{ '{:,.0f}'.format(b.total_price) }}</strong></td>
                   <td><span class="badge badge--{{ b.status }}">{{ b.status|replace('_', ' ') }}</span></td>
                   <td>
@@ -423,6 +432,17 @@
       fetch('{{ url_for("api_update_booking") }}', {
         method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: `booking_id=${id}&status=${status}`
+      }).then(r=>r.json()).then(data => {
+        showAlert(data.message, data.success ? 'success' : 'error');
+        if (data.success) setTimeout(() => location.reload(), 800);
+      });
+    }
+
+    // Assign Technician
+    function assignTechnician(id, techId) {
+      fetch('{{ url_for("api_assign_technician") }}', {
+        method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `booking_id=${id}&technician_id=${techId}`
       }).then(r=>r.json()).then(data => {
         showAlert(data.message, data.success ? 'success' : 'error');
         if (data.success) setTimeout(() => location.reload(), 800);
