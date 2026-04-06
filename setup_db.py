@@ -1,13 +1,18 @@
 """
 ============================================
-FixNear — Database Setup Script
+FixNear — Database Setup Script (MySQL)
 Replaces setup.php for the Python/Flask version
+============================================
+Passwords are generated randomly at runtime.
+NO passwords are stored in this file.
 ============================================
 """
 
 import mysql.connector
 import bcrypt
 import os
+import secrets
+import string
 
 DB_HOST = 'localhost'
 DB_USER = 'root'
@@ -15,6 +20,11 @@ DB_PASS = ''
 
 def hash_password(pw):
     return bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def generate_password(length=10):
+    """Generate a random secure password."""
+    chars = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(chars) for _ in range(length))
 
 def main():
     print("=" * 50)
@@ -51,27 +61,29 @@ def main():
     cur.close()
     conn.close()
 
-    # Now re-hash the seed passwords with Python bcrypt
-    print("[2/3] Re-hashing seed passwords for Python bcrypt compatibility...")
+    # Generate random passwords for seed accounts
+    print("[2/3] Setting secure random passwords for seed accounts...")
     conn = mysql.connector.connect(host=DB_HOST, user=DB_USER, password=DB_PASS, database='fixnear')
     cur = conn.cursor(dictionary=True)
 
-    # Map of seed emails to their plain-text passwords
-    seed_passwords = {
-        'admin@fixnear.com': 'admin123',
-        'rajesh@fixnear.com': 'tech123',
-        'amit@fixnear.com': 'tech123',
-        'sunil@fixnear.com': 'tech123',
-        'vikram@fixnear.com': 'tech123',
-        'rakesh@fixnear.com': 'tech123',
-        'deepak@fixnear.com': 'tech123',
-        'manoj@fixnear.com': 'tech123',
-        'arun@fixnear.com': 'tech123',
-        'sanjay@fixnear.com': 'tech123',
-        'kiran@fixnear.com': 'tech123',
+    admin_password = os.environ.get('ADMIN_PASSWORD') or generate_password(12)
+    tech_password = os.environ.get('TECH_PASSWORD') or generate_password(10)
+
+    seed_emails = {
+        'admin@fixnear.com': admin_password,
+        'rajesh@fixnear.com': tech_password,
+        'amit@fixnear.com': tech_password,
+        'sunil@fixnear.com': tech_password,
+        'vikram@fixnear.com': tech_password,
+        'rakesh@fixnear.com': tech_password,
+        'deepak@fixnear.com': tech_password,
+        'manoj@fixnear.com': tech_password,
+        'arun@fixnear.com': tech_password,
+        'sanjay@fixnear.com': tech_password,
+        'kiran@fixnear.com': tech_password,
     }
 
-    for email, plain_pw in seed_passwords.items():
+    for email, plain_pw in seed_emails.items():
         hashed = hash_password(plain_pw)
         cur.execute("UPDATE users SET password=%s WHERE email=%s", (hashed, email))
         conn.commit()
@@ -82,8 +94,14 @@ def main():
 
     print("[3/3] Done!")
     print()
-    print("  Admin login:  admin@fixnear.com / admin123")
-    print("  Tech login:   rajesh@fixnear.com / tech123")
+    print("=" * 50)
+    print("  SAVE THESE CREDENTIALS (generated randomly):")
+    print("=" * 50)
+    print(f"  Admin login:  admin@fixnear.com / {admin_password}")
+    print(f"  Tech login:   rajesh@fixnear.com / {tech_password}")
+    print()
+    print("  ⚠️  These passwords are NOT stored in code.")
+    print("  ⚠️  Save them now — you won't see them again!")
     print()
     print("  Run the app:  python app.py")
     print("  Open:         http://localhost:5000")

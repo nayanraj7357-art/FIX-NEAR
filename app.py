@@ -7,11 +7,15 @@ Online Home Service Booking Platform
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from functools import wraps
+from dotenv import load_dotenv
 import bcrypt
 import string
 import random
 import os
 import uuid
+
+# Load .env file (local development only — on Render, env vars are set in Dashboard)
+load_dotenv()
 
 # Auto-detect database: PostgreSQL (Render) or MySQL (localhost)
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -28,7 +32,7 @@ else:
 # APP CONFIG
 # ============================================
 app = Flask(__name__, template_folder='templates', static_folder='static')
-app.secret_key = 'fixnear_secret_key_2026'
+app.secret_key = os.environ.get('SECRET_KEY', 'fixnear_local_dev_key_change_in_production')
 
 # ============================================
 # FILE UPLOAD CONFIG

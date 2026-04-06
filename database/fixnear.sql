@@ -118,25 +118,26 @@ INSERT INTO services (name, icon, description, price) VALUES
 ('Painter', 'fa-paint-roller', 'Wall painting, waterproofing & design', 599.00);
 
 -- ============================================
--- SEED DATA: Admin user (password: admin123)
+-- SEED DATA: Admin user (password will be set by setup_db.py)
+-- Temporary placeholder — run setup_db.py to set secure passwords
 -- ============================================
 INSERT INTO users (name, email, phone, password, role) VALUES
-('Admin', 'admin@fixnear.com', '9999999999', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+('Admin', 'admin@fixnear.com', '9999999999', 'TEMP_HASH_RUN_SETUP', 'admin');
 
 -- ============================================
--- SEED DATA: Technician users (password: tech123)
+-- SEED DATA: Technician users (passwords will be set by setup_db.py)
 -- ============================================
 INSERT INTO users (name, email, phone, password, role) VALUES
-('Rajesh Kumar', 'rajesh@fixnear.com', '9876543210', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'technician'),
-('Amit Sharma', 'amit@fixnear.com', '9876543211', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'technician'),
-('Sunil Verma', 'sunil@fixnear.com', '9876543212', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'technician'),
-('Vikram Singh', 'vikram@fixnear.com', '9876543213', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'technician'),
-('Rakesh Yadav', 'rakesh@fixnear.com', '9876543214', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'technician'),
-('Deepak Joshi', 'deepak@fixnear.com', '9876543215', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'technician'),
-('Manoj Tiwari', 'manoj@fixnear.com', '9876543216', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'technician'),
-('Arun Gupta', 'arun@fixnear.com', '9876543217', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'technician'),
-('Sanjay Patel', 'sanjay@fixnear.com', '9876543218', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'technician'),
-('Kiran Das', 'kiran@fixnear.com', '9876543219', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'technician');
+('Rajesh Kumar', 'rajesh@fixnear.com', '9876543210', 'TEMP_HASH_RUN_SETUP', 'technician'),
+('Amit Sharma', 'amit@fixnear.com', '9876543211', 'TEMP_HASH_RUN_SETUP', 'technician'),
+('Sunil Verma', 'sunil@fixnear.com', '9876543212', 'TEMP_HASH_RUN_SETUP', 'technician'),
+('Vikram Singh', 'vikram@fixnear.com', '9876543213', 'TEMP_HASH_RUN_SETUP', 'technician'),
+('Rakesh Yadav', 'rakesh@fixnear.com', '9876543214', 'TEMP_HASH_RUN_SETUP', 'technician'),
+('Deepak Joshi', 'deepak@fixnear.com', '9876543215', 'TEMP_HASH_RUN_SETUP', 'technician'),
+('Manoj Tiwari', 'manoj@fixnear.com', '9876543216', 'TEMP_HASH_RUN_SETUP', 'technician'),
+('Arun Gupta', 'arun@fixnear.com', '9876543217', 'TEMP_HASH_RUN_SETUP', 'technician'),
+('Sanjay Patel', 'sanjay@fixnear.com', '9876543218', 'TEMP_HASH_RUN_SETUP', 'technician'),
+('Kiran Das', 'kiran@fixnear.com', '9876543219', 'TEMP_HASH_RUN_SETUP', 'technician');
 
 -- ============================================
 -- SEED DATA: Technician profiles (linked to user accounts)
