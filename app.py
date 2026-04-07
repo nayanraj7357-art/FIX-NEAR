@@ -192,7 +192,7 @@ def contact():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email','').strip()
+        email = request.form.get('email','').strip().lower()
         password = request.form.get('password','')
         if not email or not password:
             flash('Email and password are required.', 'error')
@@ -214,7 +214,7 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        name = request.form.get('name','').strip(); email = request.form.get('email','').strip()
+        name = request.form.get('name','').strip(); email = request.form.get('email','').strip().lower()
         phone = request.form.get('phone','').strip(); password = request.form.get('password','')
         confirm = request.form.get('confirm_password','')
         errors = []
@@ -410,7 +410,7 @@ def api_delete_service():
 @admin_required
 def api_add_technician():
     db = get_db(); cur = db.cursor(dictionary=True)
-    email = request.form['email'].strip()
+    email = request.form['email'].strip().lower()
     cur.execute("SELECT id FROM users WHERE email=%s", (email,))
     if cur.fetchone(): db.close(); return jsonify(success=False, message='Email already registered.')
     hashed = hash_password(request.form['password'])
@@ -508,7 +508,7 @@ def forgot_password():
 
 @app.route('/reset_password', methods=['POST'])
 def reset_password():
-    email = request.form.get('email', '').strip()
+    email = request.form.get('email', '').strip().lower()
     if not email:
         flash('Please enter your email.', 'error')
         return redirect(url_for('forgot_password'))
