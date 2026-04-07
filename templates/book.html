@@ -80,7 +80,7 @@
           <i class="fas fa-tag"></i> Service Price: ₹<span id="priceValue">0</span>
         </div>
 
-        <form action="{{ url_for('api_book_service') }}" method="POST" novalidate id="bookingForm">
+        <form action="{{ url_for('api_book_service') }}" method="POST" id="bookingForm">
           <div class="form-group">
             <label for="service_id">Select Service</label>
             <div class="input-wrapper">
@@ -182,13 +182,19 @@
       fetch('{{ url_for("api_book_service") }}', {
         method: 'POST',
         body: new URLSearchParams(fd)
-      }).then(r => r.json()).then(data => {
+      }).then(r => {
+        if (!r.ok) throw new Error("Server error " + r.status);
+        return r.json();
+      }).then(data => {
         if (data.success) {
           alert(data.message);
           window.location.href = '{{ url_for("user_dashboard") }}';
         } else {
           alert(data.message);
         }
+      }).catch(err => {
+        alert("An error occurred. Check browser console or fill all fields correctly.");
+        console.error(err);
       });
     });
   </script>

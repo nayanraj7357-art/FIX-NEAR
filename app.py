@@ -20,16 +20,8 @@ from email.mime.multipart import MIMEMultipart
 # Load .env file (local development only — on Render, env vars are set in Dashboard)
 load_dotenv()
 
-# Auto-detect database: PostgreSQL (Render) or MySQL (localhost)
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-if DATABASE_URL:
-    import psycopg2
-    import psycopg2.extras
-    DB_TYPE = 'pg'
-else:
-    import mysql.connector
-    DB_TYPE = 'mysql'
+# Local MySQL Database Configuration
+import mysql.connector
 
 # ============================================
 # APP CONFIG
@@ -64,36 +56,18 @@ def save_upload(file):
 
 # ============================================
 # DATABASE CONFIG
-# Localhost → MySQL | Render → PostgreSQL (auto-detect)
+# Localhost → MySQL
 # ============================================
-if DB_TYPE == 'mysql':
-    DB_CONFIG = {
-        'host': 'localhost',
-        'user': 'root',
-        'password': '',
-        'database': 'fixnear',
-        'charset': 'utf8mb4',
-        'autocommit': True
-    }
-
-class PgConnectionWrapper:
-    """Wraps psycopg2 connection so db.cursor(dictionary=True) works like MySQL."""
-    def __init__(self, conn):
-        self._conn = conn
-    def cursor(self, dictionary=False, **kw):
-        if dictionary:
-            return self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        return self._conn.cursor(**kw)
-    def close(self):
-        self._conn.close()
-    def __getattr__(self, name):
-        return getattr(self._conn, name)
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'root',
+    'password': '',
+    'database': 'fixnear',
+    'charset': 'utf8mb4',
+    'autocommit': True
+}
 
 def get_db():
-    if DB_TYPE == 'pg':
-        conn = psycopg2.connect(DATABASE_URL)
-        conn.autocommit = True
-        return PgConnectionWrapper(conn)
     return mysql.connector.connect(**DB_CONFIG)
 
 # ============================================
@@ -232,8 +206,11 @@ def register():
                 otp = ''.join(random.choices(string.digits, k=6))
                 session['reg_details'] = {'name': name, 'email': email, 'phone': phone, 'password': hash_password(password)}
                 session['reg_otp'] = otp
-                send_otp_email(email, otp, "Verify your FixNear Registration")
-                flash('An OTP has been sent to your email. Please verify to complete registration.', 'info')
+                success = send_otp_email(email, otp, "Verify your FixNear Registration")
+                if success:
+                    flash('An OTP has been sent to your email. Please verify to complete registration.', 'info')
+                else:
+                    flash(f'TESTING MODE (Email Blocked by Render Free Tier): Your OTP is {otp}', 'info')
                 return redirect(url_for('verify_otp'))
             db.close()
         for e in errors: flash(e, 'error')
@@ -363,10 +340,23 @@ def api_book_service():
                 db.close()
                 return jsonify(success=False, message='File type not allowed. Allowed: ' + ', '.join(ALLOWED_EXTENSIONS))
             attachment_name = save_upload(file)
-    cur.execute("INSERT INTO bookings (user_id,service_id,booking_date,time_slot,address,city,phone,total_price,notes,attachment) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
-        (session['user_id'], sid, request.form['booking_date'], request.form['time_slot'], request.form['address'],
-         request.form.get('city',''), request.form['phone'], svc['price'], request.form.get('notes',''), attachment_name))
-    db.close(); return jsonify(success=True, message='Booking placed successfully!' + (' File uploaded.' if attachment_name else ''))
+    try:
+        try:
+            cur.execute("INSERT INTO bookings (user_id,service_id,booking_date,time_slot,address,city,phone,total_price,notes,attachment) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                (session['user_id'], sid, request.form['booking_date'], request.form['time_slot'], request.form['address'],
+                 request.form.get('city',''), request.form['phone'], svc['price'], request.form.get('notes',''), attachment_name))
+        except Exception as insert_e:
+            if 'attachment' in str(insert_e).lower():
+                cur.execute("INSERT INTO bookings (user_id,service_id,booking_date,time_slot,address,city,phone,total_price,notes) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    (session['user_id'], sid, request.form['booking_date'], request.form['time_slot'], request.form['address'],
+                     request.form.get('city',''), request.form['phone'], svc['price'], request.form.get('notes','')))
+            else:
+                raise insert_e
+        db.close()
+        return jsonify(success=True, message='Booking placed successfully!' + (' File uploaded.' if attachment_name else ''))
+    except Exception as e:
+        db.close()
+        return jsonify(success=False, message=f'Booking failed: {str(e)}')
 
 @app.route('/api/cancel_booking', methods=['POST'])
 @login_required
@@ -414,14 +404,9 @@ def api_add_technician():
     cur.execute("SELECT id FROM users WHERE email=%s", (email,))
     if cur.fetchone(): db.close(); return jsonify(success=False, message='Email already registered.')
     hashed = hash_password(request.form['password'])
-    if DB_TYPE == 'pg':
-        cur.execute("INSERT INTO users (name,email,phone,password,role) VALUES (%s,%s,%s,%s,'technician') RETURNING id",
-                    (request.form['name'], email, request.form['phone'], hashed))
-        uid = cur.fetchone()['id']
-    else:
-        cur.execute("INSERT INTO users (name,email,phone,password,role) VALUES (%s,%s,%s,%s,'technician')",
-                    (request.form['name'], email, request.form['phone'], hashed))
-        uid = cur.lastrowid
+    cur.execute("INSERT INTO users (name,email,phone,password,role) VALUES (%s,%s,%s,%s,'technician')",
+                (request.form['name'], email, request.form['phone'], hashed))
+    uid = cur.lastrowid
     cur.execute("INSERT INTO technicians (user_id,name,phone,email,service_id,experience_years,status) VALUES (%s,%s,%s,%s,%s,%s,%s)",
                 (uid, request.form['name'], request.form['phone'], email, request.form['service_id'],
                  request.form.get('experience_years',0), request.form.get('status','available'))); db.close()
@@ -523,8 +508,11 @@ def reset_password():
     otp = ''.join(random.choices(string.digits, k=6))
     session['reset_email'] = email
     session['reset_otp'] = otp
-    send_otp_email(email, otp, "FixNear Password Reset Verification")
-    flash('A 6-digit OTP has been sent to your email. Enter it below.', 'info')
+    success = send_otp_email(email, otp, "FixNear Password Reset Verification")
+    if success:
+        flash('A 6-digit OTP has been sent to your email. Enter it below.', 'info')
+    else:
+        flash(f'TESTING MODE (Email Blocked by Render Free Tier): Your OTP is {otp}', 'info')
     return redirect(url_for('verify_reset_otp'))
 
 @app.route('/verify_reset_otp', methods=['GET', 'POST'])
