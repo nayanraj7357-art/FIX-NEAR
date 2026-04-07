@@ -159,8 +159,8 @@ def send_otp_email(to_email, otp, subject="FixNear Verification Code"):
     """
     msg.attach(MIMEText(body, 'html'))
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
+        # Added timeout to prevent Gunicorn from terminating the worker
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10)
         server.login(mail_user, mail_pass)
         server.send_message(msg)
         server.quit()
