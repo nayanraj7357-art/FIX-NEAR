@@ -126,20 +126,20 @@ Notes:
 
 ```text
 FIX NEAR/
-├── app.py                    # Main Flask application
-├── setup_db.py               # Local database setup script
-├── requirements.txt          # Python dependencies
-├── start_fixnear.bat         # Windows app starter
-├── test_smtp.py              # SMTP/OTP email test helper
-├── .env.example              # Environment variable template
-├── database/
-│   ├── fixnear.sql           # MySQL schema
-│   └── fixnear_pg.sql        # PostgreSQL schema/reference
-├── static/
-│   ├── css/style.css         # Main stylesheet
-│   ├── js/script.js          # Frontend JavaScript
-│   └── uploads/              # Project images and UI assets
-└── templates/                # Flask/Jinja2 HTML pages
+|-- app.py                    # Main Flask application
+|-- setup_db.py               # Local database setup script
+|-- requirements.txt          # Python dependencies
+|-- start_fixnear.bat         # Windows app starter
+|-- test_smtp.py              # SMTP/OTP email test helper
+|-- .env.example              # Environment variable template
+|-- database/
+|   |-- fixnear.sql           # MySQL schema
+|   `-- fixnear_pg.sql        # PostgreSQL schema/reference
+|-- static/
+|   |-- css/style.css         # Main stylesheet
+|   |-- js/script.js          # Frontend JavaScript
+|   `-- uploads/              # Project images and UI assets
+`-- templates/                # Flask/Jinja2 HTML pages
 ```
 
 Local/private/generated files such as `.env`, `output/`, `reset_all.py`, `tempCodeRunnerFile.*`, `.vscode/`, and `__pycache__/` are ignored and should not be committed.
