@@ -40,3 +40,9 @@ desktop.ini
 # Logs
 *.log
 logs/
+
+# Generated reports / local helper files
+output/
+*.pdf
+tempCodeRunnerFile.*
+reset_all.py

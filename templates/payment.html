@@ -1,0 +1,706 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment - FixNear</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --pay-blue: #165df5;
+      --pay-blue-deep: #0f3ea8;
+      --pay-teal: #10b981;
+      --pay-teal-deep: #0f8b6d;
+      --pay-surface: rgba(255,255,255,.96);
+      --pay-bg: linear-gradient(180deg, #eef6ff 0%, #f4fbf9 48%, #f8fbff 100%);
+      --pay-shadow: 0 22px 60px rgba(15, 23, 42, .12);
+      --pay-line: #dce6f1;
+      --pay-muted: #64748b;
+    }
+    body { background: var(--pay-bg); }
+    .payment-shell { min-height: 100vh; padding: 100px 0 48px; }
+    .navbar__actions { display: flex; align-items: center; gap: 10px; }
+    .nav-bell { position: relative; width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--text-secondary); background: rgba(26,86,219,.06); border: 1px solid rgba(26,86,219,.12); }
+    .nav-bell__count { position: absolute; top: -3px; right: -2px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: #dc2626; color: #fff; font-size: .7rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
+    .notif-dropdown { position: relative; }
+    .notif-menu { position: absolute; right: 0; top: calc(100% + 10px); width: 360px; background: var(--white); border: 1px solid var(--light-gray); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 10px; display: none; z-index: 20; }
+    .notif-dropdown.open .notif-menu { display: block; }
+    .notif-menu__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 10px 12px; border-bottom: 1px solid var(--light-gray); }
+    .notif-menu__list { display: grid; gap: 8px; max-height: 340px; overflow-y: auto; padding: 10px 2px 2px; }
+    .notif-menu__item { border: 1px solid var(--light-gray); border-radius: var(--radius-md); padding: 12px; display: flex; gap: 10px; align-items: flex-start; }
+    .notif-menu__item.unread { border-color: #93c5fd; box-shadow: inset 0 0 0 1px rgba(59,130,246,.08); }
+    .notif-menu__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary); margin-top: 6px; flex-shrink: 0; }
+    .notif-menu__copy strong { display: block; font-size: .9rem; color: var(--dark); margin-bottom: 4px; }
+    .notif-menu__copy span, .notif-menu__copy small { display: block; color: var(--text-secondary); line-height: 1.45; }
+    .notif-menu__copy small { margin-top: 5px; color: var(--text-muted); font-size: .72rem; }
+    .payment-hero {
+      padding: 32px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, #0f172a 0%, #165df5 52%, #10b981 100%);
+      color: #fff;
+      box-shadow: var(--pay-shadow);
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-end;
+    }
+    .payment-hero h1 { margin: 0; font-size: 2rem; color: #fff; }
+    .payment-hero p { margin: 10px 0 0; color: rgba(255,255,255,.82); max-width: 720px; }
+    .hero-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+    .hero-pill {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      color: #fff;
+      font-size: .82rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .payment-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(330px, .85fr);
+      gap: 22px;
+    }
+    .payment-card, .summary-card, .success-card {
+      background: var(--pay-surface);
+      border: 1px solid var(--pay-line);
+      border-radius: 28px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, .08);
+    }
+    .payment-card, .summary-card, .success-card { padding: 28px; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(22, 93, 245, .08);
+      color: var(--pay-blue);
+      font-size: .78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 14px;
+    }
+    .card-title { margin: 0; color: var(--dark); font-size: 1.35rem; font-weight: 800; }
+    .card-subtitle { margin: 10px 0 0; color: var(--pay-muted); font-size: .92rem; line-height: 1.6; }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 22px 0;
+    }
+    .tab-button {
+      border: 1px solid var(--pay-line);
+      background: #f8fbff;
+      color: var(--text-primary);
+      border-radius: 18px;
+      padding: 16px 14px;
+      font-size: .9rem;
+      font-weight: 800;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: var(--transition-fast);
+    }
+    .tab-button span { font-size: .78rem; color: var(--pay-muted); font-weight: 600; }
+    .tab-button.is-active {
+      border-color: rgba(22, 93, 245, .22);
+      background: linear-gradient(135deg, rgba(22, 93, 245, .08), rgba(16, 185, 129, .08));
+      box-shadow: inset 0 0 0 1px rgba(22,93,245,.08);
+    }
+    .method-panel { display: none; margin-top: 8px; }
+    .method-panel.is-active { display: block; animation: fadeUp .25s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: .84rem;
+      font-weight: 700;
+      color: var(--dark);
+    }
+    .field input {
+      width: 100%;
+      border: 1.5px solid var(--pay-line);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: .94rem;
+      background: #fbfdff;
+      color: var(--text-primary);
+      transition: var(--transition-fast);
+      outline: none;
+    }
+    .field input:focus {
+      border-color: var(--pay-blue);
+      box-shadow: 0 0 0 4px rgba(22, 93, 245, .1);
+      background: #fff;
+    }
+    .field small { display: block; margin-top: 6px; color: var(--pay-muted); font-size: .76rem; }
+    .validation-text { margin-top: 6px; font-size: .78rem; font-weight: 700; }
+    .validation-text.invalid { color: #dc2626; }
+    .validation-text.valid { color: #047857; }
+    .wallet-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+    .wallet-option {
+      border: 1px solid var(--pay-line);
+      border-radius: 18px;
+      background: #fff;
+      padding: 14px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .86rem;
+      font-weight: 800;
+      color: var(--dark);
+      transition: var(--transition-fast);
+    }
+    .wallet-option i {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(22,93,245,.12), rgba(16,185,129,.14));
+      color: var(--pay-blue);
+    }
+    .wallet-option.is-selected {
+      border-color: rgba(22, 93, 245, .24);
+      background: linear-gradient(135deg, rgba(22,93,245,.07), rgba(16,185,129,.07));
+      transform: translateY(-1px);
+    }
+    .qr-box {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 22px;
+      border: 1px dashed rgba(100, 116, 139, .35);
+      background: linear-gradient(180deg, #f8fbff, #f4fbf9);
+    }
+    .qr-preview {
+      width: 172px;
+      height: 172px;
+      margin: 14px auto 10px;
+      border-radius: 20px;
+      background:
+        linear-gradient(90deg, rgba(15,23,42,.92) 10px, transparent 10px) 0 0 / 34px 34px,
+        linear-gradient(rgba(15,23,42,.92) 10px, transparent 10px) 0 0 / 34px 34px,
+        linear-gradient(135deg, rgba(22,93,245,.18), rgba(16,185,129,.16));
+      box-shadow: inset 0 0 0 10px #fff;
+      border: 1px solid rgba(148, 163, 184, .28);
+      display: grid;
+      place-items: center;
+      color: rgba(15, 23, 42, .54);
+      font-size: .82rem;
+      font-weight: 800;
+    }
+    .cash-box {
+      padding: 18px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(22,93,245,.06), rgba(16,185,129,.08));
+      border: 1px solid rgba(22,93,245,.12);
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .cash-box strong { display: block; color: var(--dark); margin-bottom: 6px; }
+    .pay-button {
+      width: 100%;
+      margin-top: 22px;
+      border-radius: 18px;
+      padding: 16px 18px;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, var(--pay-blue), var(--pay-teal));
+      box-shadow: 0 16px 34px rgba(22,93,245,.24);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: var(--transition-fast);
+    }
+    .pay-button:hover { transform: translateY(-1px); box-shadow: 0 20px 38px rgba(22,93,245,.28); }
+    .pay-button[disabled] { opacity: .82; cursor: wait; transform: none; }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      display: none;
+    }
+    .spinner.is-visible { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .demo-note {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(245, 158, 11, .1);
+      color: #92400e;
+      font-size: .82rem;
+      line-height: 1.55;
+      border: 1px solid rgba(245, 158, 11, .2);
+    }
+    .summary-stack { display: grid; gap: 18px; }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .summary-row strong { color: var(--dark); display: block; }
+    .summary-row span, .summary-row small { color: var(--pay-muted); display: block; line-height: 1.45; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .summary-mini {
+      border-radius: 18px;
+      background: var(--off-white);
+      border: 1px solid var(--pay-line);
+      padding: 16px;
+    }
+    .summary-mini span { display: block; font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 6px; }
+    .summary-mini strong { display: block; color: var(--dark); line-height: 1.45; }
+    .price-list { display: grid; gap: 12px; margin-top: 18px; }
+    .price-item, .price-total {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(220, 230, 241, .85);
+      color: var(--text-secondary);
+      font-size: .92rem;
+    }
+    .price-total {
+      padding: 18px;
+      border: none;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(22,93,245,.09), rgba(16,185,129,.1));
+      color: var(--dark);
+      font-weight: 800;
+      margin-top: 8px;
+    }
+    .price-total strong:last-child { font-size: 1.35rem; }
+    .footer-note {
+      margin-top: 20px;
+      text-align: center;
+      color: var(--pay-muted);
+      font-size: .82rem;
+      font-weight: 700;
+    }
+    .success-wrap {
+      display: grid;
+      place-items: center;
+      min-height: calc(100vh - 180px);
+    }
+    .success-card {
+      max-width: 620px;
+      text-align: center;
+      padding: 34px;
+    }
+    .success-mark {
+      width: 84px;
+      height: 84px;
+      margin: 0 auto 18px;
+      border-radius: 24px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(22,93,245,.14), rgba(16,185,129,.16));
+      color: var(--pay-teal);
+      font-size: 2rem;
+    }
+    @media (max-width: 1040px) {
+      .payment-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .payment-shell { padding-top: 90px; }
+      .payment-hero { flex-direction: column; align-items: flex-start; }
+      .tabs, .wallet-grid, .form-grid, .summary-grid { grid-template-columns: 1fr; }
+      .notif-menu { width: min(92vw, 360px); right: -8px; }
+      .payment-card, .summary-card, .success-card { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar scrolled" id="navbar">
+    <div class="container">
+      <a href="{{ url_for('home') }}" class="navbar__logo">Fix<span>Near</span></a>
+      <div class="navbar__actions">
+        <div class="navbar__links" id="navLinks">
+          <a href="{{ url_for('home') }}">Home</a>
+          <a href="{{ url_for('user_dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('booking_details', booking_id=booking.id) }}">Booking</a>
+          <a href="{{ url_for('payment_page', booking_id=booking.id) }}" class="active">Payment</a>
+        </div>
+        <div class="notif-dropdown" id="notifDropdown">
+          <button class="nav-bell" type="button" id="notifBell" aria-label="Notifications">
+            <i class="fas fa-bell"></i>
+            {% if unread_notifications > 0 %}<span class="nav-bell__count">{{ unread_notifications }}</span>{% endif %}
+          </button>
+          <div class="notif-menu">
+            <div class="notif-menu__head">
+              <div>
+                <strong style="display:block;font-size:.95rem;color:var(--dark)">Notifications</strong>
+                <small style="color:var(--text-muted)">{{ unread_notifications }} unread</small>
+              </div>
+            </div>
+            {% if recent_notifications %}
+            <div class="notif-menu__list">
+              {% for notification in recent_notifications %}
+              <div class="notif-menu__item {{ 'unread' if not notification.is_read else '' }}">
+                <span class="notif-menu__dot" style="{% if notification.is_read %}background:#cbd5e1{% endif %}"></span>
+                <div class="notif-menu__copy">
+                  <strong>{{ notification.title }}</strong>
+                  <span>{{ notification.message }}</span>
+                  <small>{{ notification.created_at.strftime('%d %b, %I:%M %p') if notification.created_at else '' }}</small>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div style="padding:26px 18px;text-align:center;color:var(--text-muted)">No notifications yet.</div>
+            {% endif %}
+          </div>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn-login" style="color:#dc2626;border-color:#dc2626"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+      <button class="navbar__hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <section class="payment-shell">
+    <div class="container">
+      {% if payment_success %}
+      <div class="success-wrap">
+        <div class="success-card">
+          <div class="success-mark"><i class="fas fa-check-circle"></i></div>
+          <div class="eyebrow"><i class="fas fa-shield-halved"></i> Demo Success</div>
+          <h1 class="card-title" style="font-size:2rem">Payment completed successfully</h1>
+          <p class="card-subtitle">This is a simulated confirmation for your FixNear demo. No real transaction was processed, but the flow now feels like a proper production-style checkout.</p>
+          <div class="summary-grid" style="margin-top:24px;text-align:left">
+            <div class="summary-mini"><span>Booking</span><strong>#{{ booking.id }}</strong></div>
+            <div class="summary-mini"><span>Service</span><strong>{{ booking.service_name }}</strong></div>
+            <div class="summary-mini"><span>Method</span><strong>{{ selected_method|replace('_', ' ')|title }}</strong></div>
+            <div class="summary-mini"><span>Total Paid</span><strong>Rs {{ '{:,.2f}'.format(payment_breakdown.total_amount) }}</strong></div>
+          </div>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px">
+            <a href="{{ url_for('booking_details', booking_id=booking.id) }}" class="btn btn-primary"><i class="fas fa-file-invoice"></i> View Booking</a>
+            <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+          </div>
+          <div class="footer-note">Secure Payment (Demo)</div>
+        </div>
+      </div>
+      {% else %}
+      <div class="payment-hero">
+        <div>
+          <div class="eyebrow" style="background:rgba(255,255,255,.16);color:#fff"><i class="fas fa-wallet"></i> Demo Payment Flow</div>
+          <h1>Modern payment checkout for FixNear</h1>
+          <p>This is a demo payment screen for project testing before adding a real payment gateway.</p>
+        </div>
+        <div class="hero-pills">
+          <span class="hero-pill"><i class="fas fa-lock"></i> Demo secure flow</span>
+          <span class="hero-pill"><i class="fas fa-mobile-screen-button"></i> Mobile responsive</span>
+          <span class="hero-pill"><i class="fas fa-bolt"></i> Fast simulated checkout</span>
+        </div>
+      </div>
+
+      <div class="payment-layout">
+        <div class="payment-card">
+          <div class="eyebrow"><i class="fas fa-credit-card"></i> Payment Method</div>
+          <h2 class="card-title">Choose how you want to pay</h2>
+          <p class="card-subtitle">This UI is designed for demo use. It validates form input, shows a realistic payment flow, and redirects to a success state after simulated processing.</p>
+
+          <div class="tabs" role="tablist" aria-label="Payment methods">
+            <button type="button" class="tab-button is-active" data-method="upi">
+              <strong><i class="fas fa-qrcode"></i> UPI</strong>
+              <span>Fast app-based checkout</span>
+            </button>
+            <button type="button" class="tab-button" data-method="card">
+              <strong><i class="fas fa-credit-card"></i> Card</strong>
+              <span>Debit or credit card</span>
+            </button>
+            <button type="button" class="tab-button" data-method="cash">
+              <strong><i class="fas fa-money-bill-wave"></i> Cash</strong>
+              <span>Pay after completion</span>
+            </button>
+          </div>
+
+          <form id="paymentForm" novalidate>
+            <input type="hidden" id="selectedMethod" value="upi">
+
+            <section class="method-panel is-active" id="panel-upi">
+              <div class="field">
+                <label for="upiId">UPI ID</label>
+                <input type="text" id="upiId" placeholder="user@upi" autocomplete="off">
+                <small>Examples: yourname@oksbi, demo@paytm, fixnear@upi</small>
+                <div id="upiValidation" class="validation-text"></div>
+              </div>
+
+              <div class="wallet-grid">
+                <button type="button" class="wallet-option is-selected" data-wallet="Google Pay">
+                  <i class="fab fa-google-pay"></i>
+                  <span>Google Pay</span>
+                </button>
+                <button type="button" class="wallet-option" data-wallet="PhonePe">
+                  <i class="fas fa-mobile-alt"></i>
+                  <span>PhonePe</span>
+                </button>
+                <button type="button" class="wallet-option" data-wallet="Paytm">
+                  <i class="fas fa-wallet"></i>
+                  <span>Paytm</span>
+                </button>
+              </div>
+
+              <div class="qr-box">
+                <strong style="display:block;color:var(--dark)">Scan QR instead</strong>
+                <p style="margin:8px 0 0;color:var(--pay-muted);font-size:.84rem;line-height:1.55">Dummy QR preview area for your demo. Later you can replace this with a gateway-generated QR image from the Flask backend.</p>
+                <div class="qr-preview">Demo QR</div>
+              </div>
+            </section>
+
+            <section class="method-panel" id="panel-card">
+              <div class="field">
+                <label for="cardNumber">Card Number</label>
+                <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" inputmode="numeric" maxlength="19">
+              </div>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="expiryDate">Expiry Date</label>
+                  <input type="text" id="expiryDate" placeholder="MM/YY" inputmode="numeric" maxlength="5">
+                </div>
+                <div class="field">
+                  <label for="cvv">CVV</label>
+                  <input type="password" id="cvv" placeholder="123" inputmode="numeric" maxlength="4">
+                </div>
+              </div>
+              <div class="field">
+                <label for="cardHolder">Cardholder Name</label>
+                <input type="text" id="cardHolder" placeholder="Name on card">
+              </div>
+            </section>
+
+            <section class="method-panel" id="panel-cash">
+              <div class="cash-box">
+                <strong>Cash on Service</strong>
+                Pay after service completion. This works well for demos because it feels realistic for home-service businesses and does not need real payment gateway integration during your project presentation.
+              </div>
+            </section>
+
+            <div id="paymentError" class="demo-note" style="display:none;background:#fee2e2;color:#991b1b;border-color:#fca5a5"></div>
+            <div class="demo-note">
+              Secure Payment (Demo): this interface is only for presentation and UI simulation. Replace the frontend timeout with a real Flask payment endpoint later if you add Razorpay, Stripe, Paytm, or PhonePe integration.
+            </div>
+
+            <button type="submit" id="payButton" class="pay-button">
+              <span id="payButtonText">Pay Rs {{ '{:,.2f}'.format(payment_breakdown.total_amount) }}</span>
+              <span id="paySpinner" class="spinner"></span>
+            </button>
+          </form>
+        </div>
+
+        <div class="summary-stack">
+          <div class="summary-card">
+            <div class="eyebrow"><i class="fas fa-receipt"></i> Service Summary</div>
+            <h3 class="card-title" style="font-size:1.2rem">Booking details</h3>
+            <div class="summary-grid" style="margin-top:18px">
+              <div class="summary-mini"><span>Service</span><strong>{{ booking.service_name }}</strong></div>
+              <div class="summary-mini"><span>Technician</span><strong>{{ booking.technician_name or 'Awaiting assignment' }}</strong></div>
+              <div class="summary-mini"><span>Date & Time</span><strong>{{ booking.booking_date.strftime('%d %b %Y') if booking.booking_date else 'Pending' }}{% if booking.time_slot %}<br>{{ booking.time_slot }}{% endif %}</strong></div>
+              <div class="summary-mini"><span>Address</span><strong>{{ booking.address }}{% if booking.city %}, {{ booking.city }}{% endif %}</strong></div>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="eyebrow"><i class="fas fa-file-invoice-dollar"></i> Price Breakdown</div>
+            <h3 class="card-title" style="font-size:1.2rem">Amount summary</h3>
+            <div class="price-list">
+              <div class="price-item"><span>Service Charge</span><strong>Rs {{ '{:,.2f}'.format(payment_breakdown.service_charge) }}</strong></div>
+              <div class="price-item"><span>Visiting Charge</span><strong>Rs {{ '{:,.2f}'.format(payment_breakdown.visiting_charge) }}</strong></div>
+              <div class="price-item"><span>GST</span><strong>Rs {{ '{:,.2f}'.format(payment_breakdown.gst) }}</strong></div>
+              <div class="price-total"><strong>Total Amount</strong><strong>Rs {{ '{:,.2f}'.format(payment_breakdown.total_amount) }}</strong></div>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="eyebrow"><i class="fas fa-shield-halved"></i> Demo Note</div>
+            <div class="summary-row">
+              <div>
+                <strong>Demo use only</strong>
+                <span>For a student or portfolio project, this is a good idea as long as you clearly label it as simulated checkout and do not imply real payment security.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-note">Secure Payment (Demo)</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <script>
+    const notifDropdown = document.getElementById('notifDropdown');
+    const notifBell = document.getElementById('notifBell');
+    notifBell?.addEventListener('click', function(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      notifDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', function(event) {
+      if (notifDropdown && !notifDropdown.contains(event.target)) notifDropdown.classList.remove('open');
+    });
+
+    const methodButtons = document.querySelectorAll('.tab-button');
+    const methodPanels = document.querySelectorAll('.method-panel');
+    const selectedMethodInput = document.getElementById('selectedMethod');
+    const walletButtons = document.querySelectorAll('.wallet-option');
+    const upiIdInput = document.getElementById('upiId');
+    const upiValidation = document.getElementById('upiValidation');
+    const cardNumberInput = document.getElementById('cardNumber');
+    const expiryDateInput = document.getElementById('expiryDate');
+    const cvvInput = document.getElementById('cvv');
+    const cardHolderInput = document.getElementById('cardHolder');
+    const payButton = document.getElementById('payButton');
+    const payButtonText = document.getElementById('payButtonText');
+    const paySpinner = document.getElementById('paySpinner');
+    const paymentForm = document.getElementById('paymentForm');
+    const paymentError = document.getElementById('paymentError');
+    let selectedWallet = 'Google Pay';
+
+    const totalAmount = {{ '%.2f'|format(payment_breakdown.total_amount) }};
+    if (payButtonText) {
+      payButtonText.textContent = `Pay Rs ${Number(totalAmount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    function switchMethod(method) {
+      methodButtons.forEach(button => {
+        button.classList.toggle('is-active', button.dataset.method === method);
+      });
+      methodPanels.forEach(panel => {
+        panel.classList.toggle('is-active', panel.id === `panel-${method}`);
+      });
+      selectedMethodInput.value = method;
+      hideError();
+    }
+
+    function setError(message) {
+      paymentError.textContent = message;
+      paymentError.style.display = 'block';
+    }
+
+    function hideError() {
+      paymentError.style.display = 'none';
+      paymentError.textContent = '';
+    }
+
+    function validateUpiId() {
+      if (!upiIdInput) return true;
+      const value = upiIdInput.value.trim();
+      if (!value) {
+        upiValidation.textContent = '';
+        upiValidation.className = 'validation-text';
+        return false;
+      }
+      const valid = /^[a-zA-Z0-9.\-_]{2,}@[a-zA-Z]{2,}$/i.test(value);
+      upiValidation.textContent = valid ? 'UPI ID looks valid.' : 'Enter a valid UPI ID like user@upi';
+      upiValidation.className = `validation-text ${valid ? 'valid' : 'invalid'}`;
+      return valid;
+    }
+
+    function validateCard() {
+      const cardNumber = (cardNumberInput?.value || '').replace(/\s+/g, '');
+      const expiryDate = (expiryDateInput?.value || '').trim();
+      const cvv = (cvvInput?.value || '').trim();
+      const cardHolder = (cardHolderInput?.value || '').trim();
+      if (!/^\d{16}$/.test(cardNumber)) return 'Enter a valid 16-digit card number.';
+      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiryDate)) return 'Enter expiry date in MM/YY format.';
+      if (!/^\d{3,4}$/.test(cvv)) return 'Enter a valid CVV.';
+      if (cardHolder.length < 3) return 'Enter the cardholder name.';
+      return '';
+    }
+
+    methodButtons.forEach(button => {
+      button.addEventListener('click', () => switchMethod(button.dataset.method));
+    });
+
+    walletButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        walletButtons.forEach(item => item.classList.remove('is-selected'));
+        button.classList.add('is-selected');
+        selectedWallet = button.dataset.wallet;
+      });
+    });
+
+    upiIdInput?.addEventListener('input', validateUpiId);
+
+    cardNumberInput?.addEventListener('input', () => {
+      const digits = cardNumberInput.value.replace(/\D/g, '').slice(0, 16);
+      cardNumberInput.value = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+    });
+
+    expiryDateInput?.addEventListener('input', () => {
+      const digits = expiryDateInput.value.replace(/\D/g, '').slice(0, 4);
+      expiryDateInput.value = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
+    });
+
+    cvvInput?.addEventListener('input', () => {
+      cvvInput.value = cvvInput.value.replace(/\D/g, '').slice(0, 4);
+    });
+
+    paymentForm?.addEventListener('submit', function(event) {
+      event.preventDefault();
+      hideError();
+
+      const selectedMethod = selectedMethodInput.value;
+      if (selectedMethod === 'upi' && !validateUpiId()) {
+        setError('Please enter a valid UPI ID before continuing.');
+        return;
+      }
+      if (selectedMethod === 'card') {
+        const cardError = validateCard();
+        if (cardError) {
+          setError(cardError);
+          return;
+        }
+      }
+
+      payButton.disabled = true;
+      paySpinner.classList.add('is-visible');
+      payButtonText.textContent = 'Processing Payment...';
+
+      // Flask backend integration:
+      // Replace this timeout with fetch('/api/payment') or your payment gateway callback.
+      // For now we simulate success and redirect back into this template with success state.
+      setTimeout(() => {
+        const params = new URLSearchParams({
+          status: 'success',
+          method: selectedMethod === 'upi' ? selectedWallet : selectedMethod
+        });
+        window.location.href = '{{ url_for("payment_page", booking_id=booking.id) }}?' + params.toString();
+      }, 2000);
+    });
+  </script>
+</body>
+</html>

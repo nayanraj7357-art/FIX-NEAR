@@ -1,0 +1,469 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking #{{ booking.id }} - FixNear</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    .booking-details-page { padding: 100px 0 56px; min-height: 100vh; background: linear-gradient(180deg, #f5f8fc 0%, #eef4fb 100%); }
+    .navbar__actions { display: flex; align-items: center; gap: 10px; }
+    .nav-bell { position: relative; width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--text-secondary); background: rgba(26,86,219,.06); border: 1px solid rgba(26,86,219,.12); }
+    .nav-bell__count { position: absolute; top: -3px; right: -2px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: #dc2626; color: #fff; font-size: .7rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
+    .notif-dropdown { position: relative; }
+    .notif-menu { position: absolute; right: 0; top: calc(100% + 10px); width: 360px; background: var(--white); border: 1px solid var(--light-gray); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); padding: 10px; display: none; z-index: 20; }
+    .notif-dropdown.open .notif-menu { display: block; }
+    .notif-menu__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 10px 12px; border-bottom: 1px solid var(--light-gray); }
+    .notif-menu__list { display: grid; gap: 8px; max-height: 340px; overflow-y: auto; padding: 10px 2px 2px; }
+    .notif-menu__item { border: 1px solid var(--light-gray); border-radius: var(--radius-md); padding: 12px; display: flex; gap: 10px; align-items: flex-start; }
+    .notif-menu__item.unread { border-color: #93c5fd; box-shadow: inset 0 0 0 1px rgba(59,130,246,.08); }
+    .notif-menu__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary); margin-top: 6px; flex-shrink: 0; }
+    .notif-menu__copy strong { display: block; font-size: .9rem; color: var(--dark); margin-bottom: 4px; }
+    .notif-menu__copy span, .notif-menu__copy small { display: block; color: var(--text-secondary); line-height: 1.45; }
+    .notif-menu__copy small { margin-top: 5px; color: var(--text-muted); font-size: .72rem; }
+    .details-hero { background: linear-gradient(135deg, #0f172a 0%, #18377d 56%, #0ea5e9 100%); color: #fff; border-radius: 30px; padding: 30px 32px; display: flex; justify-content: space-between; align-items: flex-end; gap: 18px; margin-bottom: 24px; box-shadow: var(--shadow-lg); }
+    .details-hero h1 { margin: 0; font-size: 2rem; color: #fff; }
+    .details-hero p { margin: 8px 0 0; color: rgba(255,255,255,.82); max-width: 700px; }
+    .hero-actions, .detail-grid, .meta-grid, .action-row, .activity-list, .support-list { display: grid; gap: 16px; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .chip, .tag, .status-pill { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; font-weight: 700; }
+    .chip { padding: 10px 14px; background: rgba(255,255,255,.14); color: #fff; font-size: .82rem; }
+    .status-pill { padding: 10px 16px; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+    .status-pill.pending { background: #fef3c7; color: #92400e; }
+    .status-pill.confirmed { background: #dbeafe; color: #1d4ed8; }
+    .status-pill.in_progress { background: #dbeafe; color: #1d4ed8; }
+    .status-pill.completed { background: #d1fae5; color: #065f46; }
+    .status-pill.cancelled { background: #fee2e2; color: #991b1b; }
+    .detail-grid { grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); }
+    .panel, .side-card, .timeline-card, .review-card { background: rgba(255,255,255,.96); border: 1px solid var(--light-gray); border-radius: 26px; box-shadow: var(--shadow-sm); }
+    .panel, .side-card, .timeline-card, .review-card { padding: 26px; }
+    .section-kicker { font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--primary); margin-bottom: 10px; }
+    .panel h2, .side-card h3, .timeline-card h3, .review-card h3 { margin: 0; color: var(--dark); font-weight: 800; }
+    .panel p, .side-card p, .timeline-card p, .review-card p { color: var(--text-secondary); line-height: 1.6; }
+    .meta-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 22px 0 18px; }
+    .meta-item, .timeline-item, .support-item { padding: 16px 18px; border-radius: 18px; background: var(--off-white); border: 1px solid var(--light-gray); }
+    .meta-item span, .timeline-item small { display: block; font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 6px; }
+    .meta-item strong, .timeline-item strong { display: block; color: var(--dark); line-height: 1.45; }
+    .action-row { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 20px; }
+    .action-card { padding: 16px 18px; border-radius: 18px; border: 1px solid var(--light-gray); background: var(--white); }
+    .action-card strong { display: block; color: var(--dark); margin-bottom: 6px; }
+    .action-card span { color: var(--text-secondary); font-size: .84rem; line-height: 1.5; }
+    .tag { padding: 8px 12px; background: var(--off-white); color: var(--text-secondary); font-size: .8rem; margin-right: 8px; margin-bottom: 8px; }
+    .timeline-shell { display: grid; gap: 14px; margin-top: 18px; }
+    .timeline-item { background: rgba(248,250,252,.85); }
+    .timeline-item p { margin: 8px 0 0; font-size: .88rem; }
+    .review-stars { display: flex; gap: 6px; color: #f59e0b; margin: 14px 0 10px; }
+    .support-list { margin-top: 18px; }
+    .support-item strong { display: block; color: var(--dark); margin-bottom: 6px; }
+    .support-item a { color: var(--primary); font-weight: 700; }
+    .muted-box { margin-top: 16px; padding: 16px 18px; border-radius: 18px; background: rgba(15,23,42,.04); border: 1px solid rgba(15,23,42,.06); }
+    .empty-state-lite { text-align: center; padding: 26px 18px; color: var(--text-muted); border: 1px dashed rgba(148,163,184,.35); border-radius: 18px; background: rgba(248,250,252,.78); }
+    @media (max-width: 1040px) { .detail-grid, .action-row { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) {
+      .details-hero { flex-direction: column; align-items: flex-start; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .navbar__actions { gap: 8px; }
+      .notif-menu { width: min(92vw, 360px); right: -8px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar scrolled" id="navbar">
+    <div class="container">
+      <a href="{{ url_for('home') }}" class="navbar__logo">Fix<span>Near</span></a>
+      <div class="navbar__actions">
+        <div class="navbar__links" id="navLinks">
+          <a href="{{ url_for('home') }}">Home</a>
+          <a href="{{ url_for('user_dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('booking_details', booking_id=booking.id) }}" class="active">Booking Details</a>
+          <a href="{{ url_for('profile') }}">Profile</a>
+        </div>
+        <div class="notif-dropdown" id="notifDropdown">
+          <button class="nav-bell" type="button" id="notifBell" aria-label="Notifications">
+            <i class="fas fa-bell"></i>
+            {% if unread_notifications > 0 %}<span class="nav-bell__count">{{ unread_notifications }}</span>{% endif %}
+          </button>
+          <div class="notif-menu">
+            <div class="notif-menu__head">
+              <div>
+                <strong style="display:block;font-size:.95rem;color:var(--dark)">Notifications</strong>
+                <small style="color:var(--text-muted)">{{ unread_notifications }} unread</small>
+              </div>
+              {% if unread_notifications > 0 %}<button class="btn btn-sm btn-success" type="button" onclick="markAllNotificationsRead()">Mark all read</button>{% endif %}
+            </div>
+            {% if recent_notifications %}
+            <div class="notif-menu__list">
+              {% for notification in recent_notifications %}
+              <div class="notif-menu__item {{ 'unread' if not notification.is_read else '' }}">
+                <span class="notif-menu__dot" style="{% if notification.is_read %}background:#cbd5e1{% endif %}"></span>
+                <div class="notif-menu__copy">
+                  <strong>{{ notification.title }}</strong>
+                  <span>{{ notification.message }}</span>
+                  <small>{{ notification.created_at.strftime('%d %b, %I:%M %p') if notification.created_at else '' }}</small>
+                  {% if not notification.is_read %}<button class="btn btn-sm btn-success" type="button" style="margin-top:8px" onclick="markNotificationRead({{ notification.id }})">Mark read</button>{% endif %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state-lite"><i class="fas fa-bell-slash" style="font-size:2rem;opacity:.3;margin-bottom:8px"></i><p>No notifications yet.</p></div>
+            {% endif %}
+          </div>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn-login" style="color:#dc2626;border-color:#dc2626"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+      <button class="navbar__hamburger" id="hamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <section class="booking-details-page">
+    <div class="container">
+      <div class="details-hero">
+        <div>
+          <div class="section-kicker" style="color:#bfdbfe">Booking Workspace</div>
+          <h1>{{ booking.service_name }} booking #{{ booking.id }}</h1>
+          <p>This page keeps the full booking summary, technician status, timeline notes, and actions together so the next step is always clear.</p>
+        </div>
+        <div class="hero-actions">
+          <span class="chip"><i class="fas fa-calendar"></i> {{ booking.booking_date.strftime('%d %b %Y') if booking.booking_date else 'Date pending' }}</span>
+          <span class="chip"><i class="fas fa-clock"></i> {{ booking.time_slot or 'Slot pending' }}</span>
+          <span class="status-pill {{ booking.status }}">{{ booking.status|replace('_', ' ')|title }}</span>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="panel">
+          <div class="section-kicker">Overview</div>
+          <h2>{{ booking.service_name }} service summary</h2>
+          <p>{{ booking.service_description or 'The selected service is tracked here with schedule, technician, location, and customer notes.' }}</p>
+
+          <div class="meta-grid">
+            <div class="meta-item"><span>Booking ID</span><strong>#{{ booking.id }}</strong></div>
+            <div class="meta-item"><span>Status</span><strong>{{ booking.status|replace('_', ' ')|title }}</strong></div>
+            <div class="meta-item"><span>Preferred Slot</span><strong>{{ booking.booking_date.strftime('%d %b %Y') if booking.booking_date else 'Date pending' }}{% if booking.time_slot %} | {{ booking.time_slot }}{% endif %}</strong></div>
+            <div class="meta-item"><span>Estimated Price</span><strong>Rs {{ '{:,.0f}'.format(booking.total_price) }}</strong></div>
+            <div class="meta-item"><span>Service Address</span><strong>{{ booking.address }}{% if booking.city %}, {{ booking.city }}{% endif %}</strong></div>
+            <div class="meta-item"><span>Contact Phone</span><strong>{{ booking.phone }}</strong></div>
+            <div class="meta-item"><span>Booked On</span><strong>{{ booking.created_at.strftime('%d %b %Y, %I:%M %p') if booking.created_at else 'Recently created' }}</strong></div>
+            <div class="meta-item"><span>Last Update</span><strong>{{ booking.updated_at.strftime('%d %b %Y, %I:%M %p') if booking.updated_at else 'Awaiting changes' }}</strong></div>
+          </div>
+
+          <div class="action-row">
+            <div class="action-card">
+              <strong>Booking Notes</strong>
+              <span>{{ booking.notes or 'No extra instructions were added for this visit.' }}</span>
+            </div>
+            <div class="action-card">
+              <strong>Attachment</strong>
+              <span>
+                {% if booking.attachment %}
+                <a href="{{ url_for('static', filename='uploads/' + booking.attachment) }}" target="_blank">Open uploaded file</a>
+                {% else %}
+                No attachment was submitted for this booking.
+                {% endif %}
+              </span>
+            </div>
+            <div class="action-card">
+              <strong>Technician State</strong>
+              <span>
+                {% if booking.technician_name %}
+                {{ booking.technician_name }} is currently marked as {{ booking.technician_status|replace('_', ' ')|title }}.
+                {% else %}
+                A technician has not been assigned yet for this booking.
+                {% endif %}
+              </span>
+            </div>
+          </div>
+
+          <div class="muted-box">
+            <div class="section-kicker" style="margin-bottom:8px">Actions</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+              {% if booking.status in ['pending', 'confirmed'] %}
+              <a href="{{ url_for('payment_page', booking_id=booking.id) }}" class="btn btn-outline"><i class="fas fa-wallet"></i> Open Payment Demo</a>
+              <button type="button" class="btn btn-primary" onclick='openReschedule({{ booking.id }}, {{ booking.service_id }}, {{ (booking.booking_date.strftime("%Y-%m-%d") if booking.booking_date else "")|tojson }}, {{ (booking.time_slot or "")|tojson }})'><i class="fas fa-calendar-days"></i> Reschedule</button>
+              <button type="button" class="btn btn-outline" style="border-color:#dc2626;color:#dc2626" onclick="cancelBooking({{ booking.id }})"><i class="fas fa-ban"></i> Cancel Booking</button>
+              {% elif booking.status == 'completed' %}
+              {% if not booking.user_review %}
+              <button type="button" class="btn btn-primary" onclick="openReview({{ booking.id }})"><i class="fas fa-star"></i> Leave Review</button>
+              {% endif %}
+              <a href="{{ url_for('book_service', service_id=booking.service_id) }}" class="btn btn-outline"><i class="fas fa-rotate-right"></i> Book Again</a>
+              {% elif booking.status == 'cancelled' %}
+              <a href="{{ url_for('book_service', service_id=booking.service_id) }}" class="btn btn-outline"><i class="fas fa-rotate-right"></i> Book Again</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;gap:18px">
+          <div class="side-card">
+            <div class="section-kicker">Technician</div>
+            <h3>{{ booking.technician_name or 'Awaiting assignment' }}</h3>
+            <p>{% if booking.technician_name %}Technician details stay visible here so the booking feels active and trustworthy.{% else %}Once the slot is assigned, technician details will appear here automatically.{% endif %}</p>
+            <div style="margin-top:16px">
+              <span class="tag"><i class="fas fa-user-hard-hat"></i> {{ booking.technician_name or 'Assignment queue' }}</span>
+              <span class="tag"><i class="fas fa-signal"></i> {{ booking.technician_status|replace('_', ' ')|title if booking.technician_status else 'Pending' }}</span>
+              {% if booking.technician_phone %}<a class="tag" href="tel:{{ booking.technician_phone }}"><i class="fas fa-phone"></i> Call technician</a>{% endif %}
+              {% if booking.technician_email %}<a class="tag" href="mailto:{{ booking.technician_email }}"><i class="fas fa-envelope"></i> Email</a>{% endif %}
+            </div>
+          </div>
+
+          <div class="timeline-card">
+            <div class="section-kicker">Timeline</div>
+            <h3>Booking activity</h3>
+            <p>The latest booking-specific updates are grouped here so you can see what changed and when.</p>
+            <div class="timeline-shell">
+              {% if booking.timeline_notifications %}
+                {% for item in booking.timeline_notifications %}
+                <div class="timeline-item">
+                  <small>{{ item.created_at.strftime('%d %b %Y, %I:%M %p') if item.created_at else '' }}</small>
+                  <strong>{{ item.title }}</strong>
+                  <p>{{ item.message }}</p>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div class="empty-state-lite">Booking-specific activity will appear here as notifications are generated.</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="review-card">
+            <div class="section-kicker">Review</div>
+            <h3>{{ 'Your submitted review' if booking.user_review else 'No review yet' }}</h3>
+            {% if booking.user_review %}
+            <div class="review-stars">
+              {% for _ in range(booking.user_review.rating) %}<i class="fas fa-star"></i>{% endfor %}
+            </div>
+            <p>{{ booking.user_review.comment or 'You left a rating without a written comment.' }}</p>
+            <p style="margin-top:10px;font-size:.82rem;color:var(--text-muted)">Submitted on {{ booking.user_review.created_at.strftime('%d %b %Y, %I:%M %p') if booking.user_review.created_at else '' }}</p>
+            {% elif booking.status == 'completed' %}
+            <p>This booking is complete and ready for feedback.</p>
+            <button type="button" class="btn btn-primary" onclick="openReview({{ booking.id }})"><i class="fas fa-star"></i> Add Review</button>
+            {% else %}
+            <p>The review option will appear once this booking is completed.</p>
+            {% endif %}
+          </div>
+
+          <div class="review-card">
+            <div class="section-kicker">Need Help</div>
+            <h3>Support options</h3>
+            <div class="support-list">
+              <div class="support-item"><strong>Booking issue</strong><span>Use the booking id <b>#{{ booking.id }}</b> when contacting support for faster help.</span></div>
+              <div class="support-item"><strong>General support</strong><a href="{{ url_for('home') }}#contact">Open the contact section</a></div>
+              <div class="support-item"><strong>Repeat service</strong><span>Use Book Again after completion or cancellation to restart this service quickly.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="reviewModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:16px;padding:36px;max-width:440px;width:90%;margin:auto;margin-top:15vh">
+      <h3 style="margin-bottom:16px;font-size:1.2rem">Rate This Service</h3>
+      <form id="reviewForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="booking_id" id="reviewBookingId" value="{{ booking.id }}">
+        <div style="margin-bottom:16px">
+          <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:6px">Rating</label>
+          <div id="starRating" style="font-size:1.8rem;cursor:pointer;color:#e2e8f0">
+            <i class="fas fa-star" data-val="1"></i><i class="fas fa-star" data-val="2"></i><i class="fas fa-star" data-val="3"></i><i class="fas fa-star" data-val="4"></i><i class="fas fa-star" data-val="5"></i>
+          </div>
+          <input type="hidden" name="rating" id="ratingValue" value="0">
+        </div>
+        <div style="margin-bottom:20px"><label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:6px">Comment</label><textarea name="comment" rows="3" style="width:100%;padding:10px;border:1.5px solid var(--light-gray);border-radius:8px;font-family:inherit;resize:none" placeholder="Write your comment..."></textarea></div>
+        <div style="display:flex;gap:10px"><button type="submit" class="btn btn-primary" style="flex:1;justify-content:center">Submit Review</button><button type="button" class="btn btn-outline" onclick="closeReview()" style="flex:1;justify-content:center">Cancel</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="rescheduleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:16px;padding:36px;max-width:460px;width:92%;margin:auto;margin-top:12vh">
+      <h3 style="margin-bottom:10px;font-size:1.2rem">Reschedule Booking</h3>
+      <p style="color:var(--text-muted);font-size:.88rem;margin-bottom:18px">Choose a new preferred date and time. We will re-check technician availability before saving.</p>
+      <div id="rescheduleAlertArea"></div>
+      <div id="rescheduleSlotInsight" style="display:none;margin-bottom:16px;padding:14px 16px;border-radius:12px;border:1px solid var(--light-gray);background:var(--off-white);font-size:.85rem;color:var(--text-secondary)"></div>
+      <form id="rescheduleForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="booking_id" id="rescheduleBookingId">
+        <input type="hidden" name="service_id" id="rescheduleServiceId">
+        <div class="form-group" style="margin-bottom:16px">
+          <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:6px">New Date</label>
+          <div class="input-wrapper"><i class="fas fa-calendar"></i><input type="date" name="booking_date" id="rescheduleDate" required></div>
+        </div>
+        <div class="form-group" style="margin-bottom:20px">
+          <label style="font-size:.85rem;font-weight:600;display:block;margin-bottom:6px">New Time Slot</label>
+          <div class="input-wrapper">
+            <i class="fas fa-clock"></i>
+            <select name="time_slot" id="rescheduleTimeSlot" required style="width:100%;padding:13px 16px 13px 46px;border:1.5px solid var(--light-gray);border-radius:12px;font-size:.92rem;font-family:inherit;color:var(--text-primary);background:var(--off-white);outline:none;appearance:none">
+              <option value="">- Select time -</option>
+              <option value="9:00 AM - 11:00 AM">9:00 AM - 11:00 AM</option>
+              <option value="11:00 AM - 1:00 PM">11:00 AM - 1:00 PM</option>
+              <option value="2:00 PM - 4:00 PM">2:00 PM - 4:00 PM</option>
+              <option value="4:00 PM - 6:00 PM">4:00 PM - 6:00 PM</option>
+              <option value="6:00 PM - 8:00 PM">6:00 PM - 8:00 PM</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center">Save Changes</button>
+          <button type="button" class="btn btn-outline" onclick="closeReschedule()" style="flex:1;justify-content:center">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <script>
+    const csrfToken = '{{ csrf_token() }}';
+
+    function withCsrfHeaders(headers = {}) {
+      return Object.assign({}, headers, { 'X-CSRF-Token': csrfToken });
+    }
+
+    const notifDropdown = document.getElementById('notifDropdown');
+    const notifBell = document.getElementById('notifBell');
+    const rescheduleModal = document.getElementById('rescheduleModal');
+    const rescheduleForm = document.getElementById('rescheduleForm');
+    const rescheduleDate = document.getElementById('rescheduleDate');
+    const rescheduleTimeSlot = document.getElementById('rescheduleTimeSlot');
+    const rescheduleServiceId = document.getElementById('rescheduleServiceId');
+    const rescheduleBookingId = document.getElementById('rescheduleBookingId');
+    const rescheduleAlertArea = document.getElementById('rescheduleAlertArea');
+    const rescheduleSlotInsight = document.getElementById('rescheduleSlotInsight');
+
+    notifBell?.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); notifDropdown.classList.toggle('open'); });
+    document.addEventListener('click', function(e) { if (notifDropdown && !notifDropdown.contains(e.target)) notifDropdown.classList.remove('open'); });
+
+    function cancelBooking(id) {
+      if (!confirm('Are you sure you want to cancel this booking?')) return;
+      fetch('{{ url_for("api_cancel_booking") }}', {
+        method: 'POST',
+        headers: withCsrfHeaders({'Content-Type': 'application/x-www-form-urlencoded'}),
+        body: 'booking_id=' + id
+      }).then(r => r.json()).then(data => {
+        alert(data.message);
+        if (data.success) window.location.href = '{{ url_for("user_dashboard") }}';
+      });
+    }
+
+    function openReview(bookingId) {
+      document.getElementById('reviewBookingId').value = bookingId;
+      document.getElementById('reviewModal').style.display = 'flex';
+    }
+    function closeReview() { document.getElementById('reviewModal').style.display = 'none'; }
+
+    function setRescheduleAlert(message, ok) {
+      const bgColor = ok ? '#d1fae5' : '#fee2e2';
+      const textColor = ok ? '#065f46' : '#991b1b';
+      const borderColor = ok ? '#6ee7b7' : '#fca5a5';
+      rescheduleAlertArea.innerHTML = `<div style="padding:12px 18px;border-radius:10px;margin-bottom:16px;font-size:.85rem;background:${bgColor};color:${textColor};border:1px solid ${borderColor}">${message}</div>`;
+    }
+    function hideRescheduleAlert() { rescheduleAlertArea.innerHTML = ''; }
+    function renderRescheduleSlotInsight(data) {
+      const tone = data.state === 'available'
+        ? { bg: '#ecfdf5', border: '#86efac', color: '#047857', icon: 'fa-circle-check', title: 'Slot looks available' }
+        : { bg: '#fff7ed', border: '#fdba74', color: '#c2410c', icon: 'fa-hourglass-half', title: 'Preferred slot is currently full' };
+      const suggestions = data.suggestions && data.suggestions.length
+        ? `<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">${data.suggestions.map(item => `<span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:#fff;border:1px solid rgba(148,163,184,.25);font-size:.78rem;font-weight:700;color:#0f172a"><i class="fas fa-calendar-day"></i>${item}</span>`).join('')}</div>`
+        : '';
+      rescheduleSlotInsight.style.display = 'block';
+      rescheduleSlotInsight.style.background = tone.bg;
+      rescheduleSlotInsight.style.borderColor = tone.border;
+      rescheduleSlotInsight.style.color = tone.color;
+      rescheduleSlotInsight.innerHTML = `<div style="display:flex;align-items:center;gap:8px;font-weight:800;margin-bottom:6px"><i class="fas ${tone.icon}"></i><span>${tone.title}</span></div><div>${data.message}</div>${suggestions}`;
+    }
+    function hideRescheduleSlotInsight() {
+      rescheduleSlotInsight.style.display = 'none';
+      rescheduleSlotInsight.innerHTML = '';
+    }
+    function openReschedule(bookingId, serviceId, bookingDate, timeSlot) {
+      hideRescheduleAlert();
+      hideRescheduleSlotInsight();
+      rescheduleBookingId.value = bookingId;
+      rescheduleServiceId.value = serviceId;
+      rescheduleDate.value = bookingDate || '';
+      rescheduleTimeSlot.value = timeSlot || '';
+      rescheduleModal.style.display = 'flex';
+      checkRescheduleAvailability();
+    }
+    function closeReschedule() {
+      rescheduleModal.style.display = 'none';
+      hideRescheduleAlert();
+      hideRescheduleSlotInsight();
+      rescheduleForm.reset();
+    }
+    function checkRescheduleAvailability() {
+      if (!rescheduleServiceId.value || !rescheduleDate.value || !rescheduleTimeSlot.value) {
+        hideRescheduleSlotInsight();
+        return;
+      }
+      const params = new URLSearchParams({
+        service_id: rescheduleServiceId.value,
+        booking_date: rescheduleDate.value,
+        time_slot: rescheduleTimeSlot.value,
+        exclude_booking_id: rescheduleBookingId.value
+      });
+      fetch('{{ url_for("api_slot_availability") }}', {
+        method: 'POST',
+        headers: withCsrfHeaders({'Content-Type': 'application/x-www-form-urlencoded'}),
+        body: params
+      }).then(r => r.json()).then(data => {
+        if (data.success) renderRescheduleSlotInsight(data);
+        else hideRescheduleSlotInsight();
+      }).catch(() => hideRescheduleSlotInsight());
+    }
+
+    const stars = document.querySelectorAll('#starRating i');
+    stars.forEach(star => {
+      star.addEventListener('click', () => {
+        const val = star.dataset.val;
+        document.getElementById('ratingValue').value = val;
+        stars.forEach(s => s.style.color = s.dataset.val <= val ? '#f59e0b' : '#e2e8f0');
+      });
+    });
+    document.getElementById('reviewForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      fetch('{{ url_for("api_submit_review") }}', {
+        method: 'POST',
+        body: new URLSearchParams(formData)
+      }).then(r => r.json()).then(data => {
+        alert(data.message);
+        if (data.success) location.reload();
+      });
+    });
+
+    rescheduleDate.min = new Date().toISOString().split('T')[0];
+    rescheduleDate.addEventListener('change', checkRescheduleAvailability);
+    rescheduleTimeSlot.addEventListener('change', checkRescheduleAvailability);
+    rescheduleForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      hideRescheduleAlert();
+      fetch('{{ url_for("api_reschedule_booking") }}', {
+        method: 'POST',
+        body: new URLSearchParams(new FormData(this))
+      }).then(r => r.json()).then(data => {
+        setRescheduleAlert(data.message, data.success);
+        if (data.success) setTimeout(() => location.reload(), 900);
+      }).catch(() => setRescheduleAlert('Could not reschedule the booking right now.', false));
+    });
+
+    function markNotificationRead(id) {
+      fetch('{{ url_for("api_mark_notification_read") }}', {
+        method: 'POST',
+        headers: withCsrfHeaders({'Content-Type': 'application/x-www-form-urlencoded'}),
+        body: 'notification_id=' + id
+      }).then(r => r.json()).then(data => { if (data.success) location.reload(); });
+    }
+    function markAllNotificationsRead() {
+      fetch('{{ url_for("api_mark_notification_read") }}', {
+        method: 'POST',
+        headers: withCsrfHeaders({'Content-Type': 'application/x-www-form-urlencoded'}),
+        body: 'mark_all=1'
+      }).then(r => r.json()).then(data => { if (data.success) location.reload(); });
+    }
+  </script>
+</body>
+</html>

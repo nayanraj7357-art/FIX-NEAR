@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Profile — FixNear</title>
+  <title>My Profile - FixNear</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
@@ -60,6 +60,7 @@
         <!-- Profile Info -->
         <div class="section-title"><i class="fas fa-id-card" style="margin-right:6px;color:var(--primary)"></i> Personal Information</div>
         <form id="profileForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="form-row">
             <div class="form-group">
               <label for="name">Full Name</label>
@@ -84,6 +85,7 @@
         <!-- Change Password -->
         <div class="section-title"><i class="fas fa-lock" style="margin-right:6px;color:var(--primary)"></i> Change Password</div>
         <form id="passwordForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="form-group">
             <label for="current_password">Current Password</label>
             <div class="input-wrapper"><i class="fas fa-key"></i><input type="password" id="current_password" name="current_password" placeholder="Enter current password" required></div>

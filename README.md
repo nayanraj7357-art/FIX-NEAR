@@ -1,10 +1,10 @@
-# 🔧 FixNear — Local Service Provider Platform
+﻿# FixNear - Local Service Provider Platform
 
 FixNear ek web-based platform hai jo users ko unke nearby local service providers (plumbers, electricians, carpenters, etc.) se connect karta hai.
 
 ---
 
-## 📌 Features
+## Features
 
 - User & Service Provider Registration/Login
 - Service booking system with file attachments
@@ -16,7 +16,7 @@ FixNear ek web-based platform hai jo users ko unke nearby local service provider
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer    | Technology           |
 |----------|----------------------|
@@ -29,7 +29,7 @@ FixNear ek web-based platform hai jo users ko unke nearby local service provider
 
 ---
 
-## ⚙️ Installation & Setup
+## Installation & Setup
 
 ### Prerequisites
 - Python 3.8+

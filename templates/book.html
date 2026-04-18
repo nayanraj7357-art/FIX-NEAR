@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Book a Service — FixNear</title>
+  <title>Book a Service - FixNear</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
@@ -26,7 +26,7 @@
     .form-group textarea {
       width: 100%; padding: 13px 16px; border: 1.5px solid var(--light-gray);
       border-radius: var(--radius-md); font-size: .92rem; font-family: inherit;
-      color: var(--text-primary); background: var(--off-white); resize: vertical; min-height: 80px;
+      color: var(--text-primary); background: var(--off-white); resize: vertical; min-height: 88px;
       outline: none; transition: var(--transition-fast);
     }
     .form-group textarea:focus { border-color: var(--primary); background: var(--white); box-shadow: 0 0 0 4px rgba(26,86,219,.1); }
@@ -35,18 +35,67 @@
       background: rgba(26,86,219,.06); color: var(--primary); padding: 8px 18px;
       border-radius: var(--radius-full); font-size: .88rem; font-weight: 700; margin-bottom: 20px;
     }
+    .booking-hint {
+      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px;
+      background: linear-gradient(135deg, rgba(26,86,219,.08), rgba(14,165,233,.08));
+      color: var(--dark); padding: 16px 18px; border-radius: var(--radius-lg);
+      border: 1px solid rgba(59,130,246,.18);
+    }
+    .booking-hint i { color: var(--primary); margin-top: 2px; }
+    .slot-insight {
+      display: none; margin-bottom: 20px; border-radius: var(--radius-lg); padding: 16px 18px;
+      border: 1px solid var(--light-gray); background: var(--off-white);
+    }
+    .slot-insight--available { background: #ecfdf5; border-color: #a7f3d0; }
+    .slot-insight--queue { background: #fff7ed; border-color: #fdba74; }
+    .slot-insight__head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-weight: 700; }
+    .slot-insight__head i { font-size: 1rem; }
+    .slot-insight--available .slot-insight__head { color: #047857; }
+    .slot-insight--queue .slot-insight__head { color: #c2410c; }
+    .slot-insight p { margin: 0; color: var(--text-muted); font-size: .88rem; line-height: 1.55; }
+    .slot-insight__suggestions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .slot-insight__tag {
+      display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
+      border-radius: var(--radius-full); background: rgba(255,255,255,.9); border: 1px solid rgba(148,163,184,.28);
+      font-size: .8rem; color: var(--dark); font-weight: 600;
+    }
+    .field-heading {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .field-heading label { margin: 0; }
+    .location-tools {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+    }
+    .location-btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px;
+      border-radius: var(--radius-full); border: 1px solid rgba(26,86,219,.15);
+      background: rgba(26,86,219,.06); color: var(--primary); font-size: .82rem; font-weight: 700;
+      transition: var(--transition-fast);
+    }
+    .location-btn:hover { background: rgba(26,86,219,.12); }
+    .location-btn[disabled] { opacity: .75; cursor: wait; }
+    .location-note { font-size: .8rem; color: var(--text-muted); }
+    .location-status {
+      display: none; margin-bottom: 18px; padding: 12px 14px; border-radius: var(--radius-md);
+      font-size: .85rem; font-weight: 600; border: 1px solid transparent;
+    }
+    .location-status--info { display: block; background: rgba(22,93,245,.08); border-color: rgba(22,93,245,.14); color: #1d4ed8; }
+    .location-status--success { display: block; background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
+    .location-status--error { display: block; background: #fff7ed; border-color: #fdba74; color: #c2410c; }
     .alert { padding: 14px 20px; border-radius: var(--radius-md); margin-bottom: 20px; font-size: .88rem; font-weight: 500; }
     .alert--error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
     .alert i { margin-right: 6px; }
     @media (max-width: 768px) {
       .form-row { grid-template-columns: 1fr; }
       .booking-card { padding: 28px 20px; }
+      .field-heading { align-items: flex-start; }
+      .location-btn { width: 100%; justify-content: center; }
     }
   </style>
 </head>
 <body>
 
-  <!-- NAVBAR -->
   <nav class="navbar scrolled" id="navbar">
     <div class="container">
       <a href="{{ url_for('home') }}" class="navbar__logo">Fix<span>Near</span></a>
@@ -68,7 +117,7 @@
     <div class="container">
       <div class="booking-card">
         <h1><i class="fas fa-calendar-check" style="color:var(--primary)"></i> Book a Service</h1>
-        <p>Fill in the details below and we'll assign a verified professional for you.</p>
+        <p>Fill in the details below and we will assign a service technician for you.</p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% for category, message in messages %}
@@ -77,20 +126,34 @@
         {% endwith %}
 
         <div id="priceDisplay" class="service-price" style="display:none">
-          <i class="fas fa-tag"></i> Service Price: ₹<span id="priceValue">0</span>
+          <i class="fas fa-tag"></i> Service Price: &#8377;<span id="priceValue">0</span>
         </div>
 
+        <div class="booking-hint">
+          <i class="fas fa-circle-info"></i>
+          <div>
+            <strong>Smart slot handling</strong>
+            <p style="margin:4px 0 0;color:var(--text-muted);font-size:.88rem">If your preferred slot is already full, you can still place the booking. We will keep it in the assignment queue and confirm the earliest available technician or next available slot.</p>
+          </div>
+        </div>
+
+        <div id="slotInsight" class="slot-insight" aria-live="polite"></div>
+
         <form action="{{ url_for('api_book_service') }}" method="POST" id="bookingForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" id="latitude" name="latitude">
+          <input type="hidden" id="longitude" name="longitude">
+
           <div class="form-group">
             <label for="service_id">Select Service</label>
             <div class="input-wrapper">
               <i class="fas fa-th-large"></i>
               <select name="service_id" id="service_id" required onchange="updatePrice()">
-                <option value="">— Choose a service —</option>
+                <option value="">- Choose a service -</option>
                 {% for s in services %}
                   <option value="{{ s.id }}" data-price="{{ s.price }}"
                     {{ 'selected' if selected_service_id|string == s.id|string else '' }}>
-                    {{ s.name }} — ₹{{ '{:,.0f}'.format(s.price) }}
+                    {{ s.name }} - &#8377;{{ '{:,.0f}'.format(s.price) }}
                   </option>
                 {% endfor %}
               </select>
@@ -110,7 +173,7 @@
               <div class="input-wrapper">
                 <i class="fas fa-clock"></i>
                 <select name="time_slot" id="time_slot" required>
-                  <option value="">— Select time —</option>
+                  <option value="">- Select time -</option>
                   <option value="9:00 AM - 11:00 AM">9:00 AM - 11:00 AM</option>
                   <option value="11:00 AM - 1:00 PM">11:00 AM - 1:00 PM</option>
                   <option value="2:00 PM - 4:00 PM">2:00 PM - 4:00 PM</option>
@@ -122,8 +185,17 @@
           </div>
 
           <div class="form-group">
-            <label for="address">Full Address</label>
-            <textarea name="address" id="address" placeholder="House/Flat No, Street, Landmark..." required></textarea>
+            <div class="field-heading">
+              <label for="address">Full Address</label>
+              <button type="button" class="location-btn" id="currentLocationBtn">
+                <i class="fas fa-location-crosshairs"></i> Use Current Location
+              </button>
+            </div>
+            <div class="location-tools">
+              <span class="location-note" id="locationNote">Type your address manually or autofill it from your current location.</span>
+            </div>
+            <div id="locationStatus" class="location-status" aria-live="polite"></div>
+            <textarea name="address" id="address" placeholder="House/Flat No, Street, Landmark..." autocomplete="street-address" required></textarea>
           </div>
 
           <div class="form-row">
@@ -131,7 +203,7 @@
               <label for="city">City</label>
               <div class="input-wrapper">
                 <i class="fas fa-location-dot"></i>
-                <input type="text" id="city" name="city" placeholder="e.g. New Delhi">
+                <input type="text" id="city" name="city" placeholder="e.g. New Delhi" autocomplete="address-level2">
               </div>
             </div>
             <div class="form-group">
@@ -158,8 +230,26 @@
 
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
   <script>
-    // Set min date to today
+    const csrfToken = '{{ csrf_token() }}';
+
+    function withCsrfHeaders(headers = {}) {
+      return Object.assign({}, headers, { 'X-CSRF-Token': csrfToken });
+    }
+
     document.getElementById('booking_date').min = new Date().toISOString().split('T')[0];
+
+    const slotInsight = document.getElementById('slotInsight');
+    const addressInput = document.getElementById('address');
+    const cityInput = document.getElementById('city');
+    const latitudeInput = document.getElementById('latitude');
+    const longitudeInput = document.getElementById('longitude');
+    const currentLocationBtn = document.getElementById('currentLocationBtn');
+    const locationStatus = document.getElementById('locationStatus');
+    const locationNote = document.getElementById('locationNote');
+    const mapsEnabled = {{ 'true' if google_maps_api_key else 'false' }};
+
+    let bookingAutocomplete = null;
+    let bookingGeocoder = null;
 
     function updatePrice() {
       const sel = document.getElementById('service_id');
@@ -175,7 +265,178 @@
     }
     updatePrice();
 
-    // Handle form submission via AJAX
+    function renderSlotInsight(data) {
+      slotInsight.className = 'slot-insight';
+      const isAvailable = data.state === 'available';
+      slotInsight.classList.add(isAvailable ? 'slot-insight--available' : 'slot-insight--queue');
+
+      let suggestions = '';
+      if (data.suggestions && data.suggestions.length) {
+        suggestions = `
+          <div class="slot-insight__suggestions">
+            ${data.suggestions.map(item => `<span class="slot-insight__tag"><i class="fas fa-calendar-day"></i> ${item}</span>`).join('')}
+          </div>
+        `;
+      }
+
+      slotInsight.innerHTML = `
+        <div class="slot-insight__head">
+          <i class="fas ${isAvailable ? 'fa-circle-check' : 'fa-hourglass-half'}"></i>
+          <span>${isAvailable ? 'Slot looks assignable' : 'Preferred slot is currently full'}</span>
+        </div>
+        <p>${data.message}</p>
+        ${suggestions}
+      `;
+      slotInsight.style.display = 'block';
+    }
+
+    function hideSlotInsight() {
+      slotInsight.style.display = 'none';
+      slotInsight.className = 'slot-insight';
+      slotInsight.innerHTML = '';
+    }
+
+    function checkSlotAvailability() {
+      const serviceId = document.getElementById('service_id').value;
+      const bookingDate = document.getElementById('booking_date').value;
+      const timeSlot = document.getElementById('time_slot').value;
+      if (!serviceId || !bookingDate || !timeSlot) {
+        hideSlotInsight();
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append('service_id', serviceId);
+      fd.append('booking_date', bookingDate);
+      fd.append('time_slot', timeSlot);
+
+      fetch('{{ url_for("api_slot_availability") }}', {
+        method: 'POST',
+        headers: withCsrfHeaders(),
+        body: new URLSearchParams(fd)
+      }).then(r => r.json()).then(data => {
+        if (data.success) renderSlotInsight(data);
+        else hideSlotInsight();
+      }).catch(() => hideSlotInsight());
+    }
+
+    function setLocationStatus(message, type = 'info') {
+      locationStatus.className = `location-status location-status--${type}`;
+      locationStatus.textContent = message;
+    }
+
+    function clearLocationStatus() {
+      locationStatus.className = 'location-status';
+      locationStatus.textContent = '';
+    }
+
+    function updateLocationButton(isLoading) {
+      currentLocationBtn.disabled = isLoading;
+      currentLocationBtn.innerHTML = isLoading
+        ? '<i class="fas fa-spinner fa-spin"></i> Fetching location...'
+        : '<i class="fas fa-location-crosshairs"></i> Use Current Location';
+    }
+
+    function resolveCity(components = []) {
+      const priority = ['locality', 'postal_town', 'administrative_area_level_2', 'administrative_area_level_1'];
+      for (const type of priority) {
+        const match = components.find((item) => item.types && item.types.includes(type));
+        if (match) return match.long_name;
+      }
+      return '';
+    }
+
+    function fillLocationFields(result, coords = null) {
+      if (result && result.formatted_address) {
+        addressInput.value = result.formatted_address;
+      }
+      const city = result && result.address_components ? resolveCity(result.address_components) : '';
+      if (city) {
+        cityInput.value = city;
+      }
+      if (coords) {
+        latitudeInput.value = coords.lat;
+        longitudeInput.value = coords.lng;
+      }
+    }
+
+    window.initBookingLocation = function initBookingLocation() {
+      if (!window.google || !window.google.maps) return;
+
+      bookingGeocoder = new google.maps.Geocoder();
+      if (window.google.maps.places && addressInput) {
+        bookingAutocomplete = new google.maps.places.Autocomplete(addressInput, {
+          fields: ['formatted_address', 'address_components', 'geometry'],
+          types: ['address']
+        });
+
+        bookingAutocomplete.addListener('place_changed', () => {
+          const place = bookingAutocomplete.getPlace();
+          if (!place || !place.formatted_address) return;
+          fillLocationFields(place, place.geometry && place.geometry.location ? {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng()
+          } : null);
+          setLocationStatus('Address selected successfully. You can still edit it manually before booking.', 'success');
+        });
+      }
+
+      locationNote.textContent = 'Search your address manually or autofill it from your current location.';
+    };
+
+    function reverseGeocodeCurrentLocation(coords) {
+      if (!bookingGeocoder) {
+        setLocationStatus('Google Maps is not ready yet. Please try again in a moment or enter the address manually.', 'error');
+        updateLocationButton(false);
+        return;
+      }
+
+      bookingGeocoder.geocode({ location: coords }, (results, status) => {
+        updateLocationButton(false);
+        if (status === 'OK' && results && results.length) {
+          fillLocationFields(results[0], coords);
+          setLocationStatus('Current location fetched successfully. Please review the address before confirming.', 'success');
+          return;
+        }
+        setLocationStatus('Location found, but we could not convert it into an address. Please enter the address manually.', 'error');
+      });
+    }
+
+    function useCurrentLocation() {
+      clearLocationStatus();
+
+      if (!mapsEnabled) {
+        setLocationStatus('Current location autofill needs a Google Maps API key. Manual address entry still works normally.', 'error');
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        setLocationStatus('Your browser does not support current location. Please enter the address manually.', 'error');
+        return;
+      }
+
+      updateLocationButton(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          reverseGeocodeCurrentLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        () => {
+          updateLocationButton(false);
+          setLocationStatus('Location permission was denied or unavailable. You can still enter the address manually.', 'error');
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
+    document.getElementById('service_id').addEventListener('change', checkSlotAvailability);
+    document.getElementById('booking_date').addEventListener('change', checkSlotAvailability);
+    document.getElementById('time_slot').addEventListener('change', checkSlotAvailability);
+    currentLocationBtn.addEventListener('click', useCurrentLocation);
+    checkSlotAvailability();
+
     document.getElementById('bookingForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const fd = new FormData(this);
@@ -183,20 +444,23 @@
         method: 'POST',
         body: new URLSearchParams(fd)
       }).then(r => {
-        if (!r.ok) throw new Error("Server error " + r.status);
+        if (!r.ok) throw new Error('Server error ' + r.status);
         return r.json();
       }).then(data => {
         if (data.success) {
           alert(data.message);
-          window.location.href = '{{ url_for("user_dashboard") }}';
+          window.location.href = data.payment_url || '{{ url_for("user_dashboard") }}';
         } else {
           alert(data.message);
         }
       }).catch(err => {
-        alert("An error occurred. Check browser console or fill all fields correctly.");
+        alert('An error occurred. Check browser console or fill all fields correctly.');
         console.error(err);
       });
     });
   </script>
+  {% if google_maps_api_key %}
+  <script async src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places&callback=initBookingLocation"></script>
+  {% endif %}
 </body>
 </html>

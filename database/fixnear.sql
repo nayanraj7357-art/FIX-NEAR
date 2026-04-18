@@ -21,6 +21,7 @@ CREATE TABLE users (
     profile_image VARCHAR(255) DEFAULT NULL,
     reset_token VARCHAR(100) DEFAULT NULL,
     reset_token_expiry DATETIME DEFAULT NULL,
+    last_login_at DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -108,6 +109,37 @@ CREATE TABLE contact_messages (
 ) ENGINE=InnoDB;
 
 -- ============================================
+-- NOTIFICATIONS TABLE
+-- ============================================
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(180) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(40) DEFAULT 'general',
+    related_booking_id INT DEFAULT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (related_booking_id) REFERENCES bookings(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ============================================
+-- NOTIFICATION PREFERENCES TABLE
+-- ============================================
+CREATE TABLE notification_preferences (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE,
+    booking_updates TINYINT(1) DEFAULT 1,
+    assignment_updates TINYINT(1) DEFAULT 1,
+    system_updates TINYINT(1) DEFAULT 1,
+    email_notifications TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ============================================
 -- SEED DATA: Services
 -- ============================================
 INSERT INTO services (name, icon, description, price) VALUES
@@ -153,3 +185,9 @@ INSERT INTO technicians (user_id, name, phone, email, service_id, experience_yea
 (9, 'Arun Gupta', '9876543217', 'arun@fixnear.com', 4, 3, 4.2),
 (10, 'Sanjay Patel', '9876543218', 'sanjay@fixnear.com', 5, 9, 4.8),
 (11, 'Kiran Das', '9876543219', 'kiran@fixnear.com', 5, 5, 4.4);
+
+-- ============================================
+-- SEED DATA: Notification preferences for all seed users
+-- ============================================
+INSERT INTO notification_preferences (user_id)
+SELECT id FROM users;

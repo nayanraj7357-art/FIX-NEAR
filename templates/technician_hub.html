@@ -1,0 +1,791 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technician Hub | Fix Near</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --bg:#f6efe6; --card:rgba(255,255,255,.8); --ink:#1f2937; --muted:#6b7280; --line:rgba(31,41,55,.1); --brand:#0f766e; --brand2:#115e59; --accent:#f97316; --ok:#166534; --okbg:#dcfce7; --warn:#a16207; --warnbg:#fef3c7; --bad:#b91c1c; --badbg:#fee2e2; --slate:#0f172a; --shadow:0 18px 40px rgba(15,23,42,.08); }
+        * { box-sizing:border-box; }
+        body { margin:0; font-family:'Manrope',sans-serif; color:var(--ink); background:radial-gradient(circle at top left,rgba(15,118,110,.12),transparent 24%),radial-gradient(circle at top right,rgba(249,115,22,.12),transparent 20%),linear-gradient(180deg,#faf4ec 0%,#efe4d3 100%); }
+        .shell { display:grid; grid-template-columns:310px minmax(0,1fr); min-height:100vh; }
+        .sidebar { background:rgba(15,23,42,.97); color:#e5e7eb; padding:24px 20px; position:sticky; top:0; z-index:18; display:flex; flex-direction:column; align-items:stretch; gap:18px; border-right:1px solid rgba(255,255,255,.06); backdrop-filter:blur(18px); height:100vh; overflow-y:auto; }
+        .brand { display:flex; gap:12px; align-items:center; text-decoration:none; color:inherit; margin:0; }
+        .brand-mark { width:46px; height:46px; border-radius:16px; display:grid; place-items:center; background:linear-gradient(135deg,#14b8a6,#f97316); color:#fff; }
+        .brand h1 { margin:0; font:700 1.2rem 'Space Grotesk',sans-serif; }
+        .small { color:rgba(229,231,235,.72); font-size:.84rem; }
+        .profile { padding:18px; border-radius:22px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); margin:0; display:grid; grid-template-columns:auto 1fr; gap:14px; }
+        .avatar { width:52px; height:52px; border-radius:18px; overflow:hidden; display:grid; place-items:center; font-weight:800; color:#fff; background:linear-gradient(135deg,rgba(20,184,166,.55),rgba(249,115,22,.55)); flex-shrink:0; }
+        .avatar img { width:100%; height:100%; object-fit:cover; }
+        .profile h2 { margin:0 0 2px; color:#fff; font-size:1rem; font-weight:800; }
+        .profile-meta { min-width:0; }
+        .profile-status { grid-column:1 / -1; padding-top:6px; }
+        .pill { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px; font-size:.78rem; font-weight:900; text-transform:uppercase; letter-spacing:.05em; border:2px solid transparent; }
+        .active { background:#000000; color:#22c55e; border-color:#111111; box-shadow:0 8px 18px rgba(0,0,0,.18); }
+        .working { background:#2563eb; color:#ffffff; border-color:#1d4ed8; box-shadow:0 8px 18px rgba(37,99,235,.24); }
+        .inactive { background:#000000; color:#ef4444; border-color:#111111; box-shadow:0 8px 18px rgba(0,0,0,.18); }
+        .pending { background:var(--warnbg); color:var(--warn); } .confirmed { background:rgba(59,130,246,.12); color:#1d4ed8; } .in_progress { background:rgba(15,118,110,.14); color:var(--brand); } .completed { background:var(--okbg); color:var(--ok); } .cancelled { background:var(--badbg); color:var(--bad); }
+        .navhd { display:block; color:rgba(226,232,240,.52); font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.12em; margin:6px 0 6px; padding:0 6px; }
+        .nav-link-hub { display:flex; gap:10px; align-items:center; padding:13px 14px; border-radius:16px; color:#cbd5e1; text-decoration:none; font-weight:800; margin:0; white-space:nowrap; width:100%; }
+        .nav-link-hub:hover,.nav-link-hub.active { background:rgba(255,255,255,.12); color:#fff; }
+        .sidebar-main { display:flex; flex-direction:column; align-items:stretch; justify-content:space-between; gap:18px; flex:1; min-width:0; }
+        .sidebar-nav { display:flex; flex-direction:column; align-items:stretch; gap:8px; padding:0; }
+        .sidebar-nav::-webkit-scrollbar { display:none; }
+        .logout-box {
+            margin-top: auto;
+            padding: 4px;
+            border-radius: 16px;
+            background: rgba(185,28,28,.12);
+            border: 1px solid rgba(248,113,113,.18);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+        }
+        .logout-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #991b1b, #b91c1c);
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: .92rem;
+        }
+        .logout-link:hover {
+            background: linear-gradient(135deg, #b91c1c, #dc2626);
+            color: #ffffff;
+        }
+        .content { padding:30px; min-width:0; }
+        .topbar { display:flex; justify-content:space-between; gap:16px; align-items:center; margin-bottom:22px; }
+        .head h2 { margin:0; font:700 2rem 'Space Grotesk',sans-serif; } .head p { margin:6px 0 0; color:var(--muted); }
+        .topbar-actions { display:flex; align-items:center; gap:12px; }
+        .bell-wrap { position:relative; }
+        .bell-btn { width:46px; height:46px; border-radius:16px; border:1px solid var(--line); background:rgba(255,255,255,.72); display:grid; place-items:center; color:var(--slate); }
+        .bell-btn:hover { background:#fff; color:var(--brand2); }
+        .bell-count { position:absolute; top:-6px; right:-4px; min-width:20px; height:20px; padding:0 5px; border-radius:999px; background:#dc2626; color:#fff; font-size:.72rem; font-weight:900; display:grid; place-items:center; }
+        .bell-menu { position:absolute; right:0; top:calc(100% + 10px); width:360px; background:#fff; border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:10px; display:none; z-index:30; }
+        .bell-wrap.open .bell-menu { display:block; }
+        .bell-head { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px 12px 12px; border-bottom:1px solid var(--line); }
+        .bell-list { display:grid; gap:8px; max-height:330px; overflow:auto; padding-top:10px; }
+        .bell-item { border:1px solid var(--line); border-radius:16px; padding:12px; background:rgba(248,250,252,.75); }
+        .bell-item.unread { border-color:rgba(37,99,235,.28); box-shadow:inset 0 0 0 1px rgba(37,99,235,.06); }
+        .bell-item .title { font-size:.92rem; }
+        .bell-item .muted { line-height:1.45; }
+        .bell-empty { text-align:center; padding:26px 18px; color:var(--muted); }
+        .bell-empty i { font-size:1.8rem; opacity:.35; margin-bottom:8px; display:block; }
+        .ghost,.btnx { border:0; border-radius:14px; padding:11px 15px; font-weight:800; }
+        .ghost { background:transparent; border:1px solid var(--line); color:var(--ink); }
+        .btnx.brand { background:var(--brand); color:#fff; } .btnx.brand:hover { background:var(--brand2); }
+        .btnx.soft { background:#e2e8f0; color:var(--ink); } .btnx.warn { background:var(--warnbg); color:var(--warn); } .btnx.ok { background:var(--okbg); color:var(--ok); } .btnx.bad { background:var(--badbg); color:var(--bad); }
+        .hero,.card { background:var(--card); border:1px solid rgba(255,255,255,.75); border-radius:26px; box-shadow:var(--shadow); backdrop-filter:blur(18px); }
+        .hero { margin-bottom:20px; overflow:hidden; background:linear-gradient(135deg,rgba(15,118,110,.96),rgba(15,23,42,.98)); color:#fff; }
+        .hero-grid { display:grid; grid-template-columns:1.2fr 1fr; gap:18px; padding:24px; }
+        .hero h3 { margin:0 0 10px; font:700 1.9rem 'Space Grotesk',sans-serif; } .hero p { margin:0; color:rgba(255,255,255,.76); line-height:1.6; }
+        .rowx { display:flex; flex-wrap:wrap; gap:10px; } .avail { margin-top:16px; }
+        .chip {
+            border:1px solid rgba(255,255,255,.16);
+            border-radius:999px;
+            padding:11px 16px;
+            background:rgba(255,255,255,.12);
+            color:#fff;
+            font-weight:900;
+            font-size:.84rem;
+            transition:background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+        }
+        .chip:hover { transform:translateY(-1px); }
+        .chip.chip-on.current {
+            background:#22c55e;
+            color:#052e16;
+            border-color:#86efac;
+            box-shadow:0 10px 24px rgba(34,197,94,.28);
+        }
+        .chip.chip-off.current {
+            background:#ef4444;
+            color:#ffffff;
+            border-color:#fca5a5;
+            box-shadow:0 10px 24px rgba(239,68,68,.24);
+        }
+        .hero-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+        .hero-stat { border-radius:20px; padding:16px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.1); }
+        .hero-stat b { display:block; font-size:1.55rem; } .hero-stat span { font-size:.82rem; color:rgba(255,255,255,.72); }
+        .metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-bottom:20px; }
+        .metric,.job,.ibox { background:rgba(255,255,255,.82); border:1px solid var(--line); border-radius:22px; }
+        .metric { padding:18px; } .metric .eyebrow { text-transform:uppercase; letter-spacing:.08em; font-size:.72rem; font-weight:800; color:var(--muted); } .metric .val { margin-top:8px; font:700 1.85rem 'Space Grotesk',sans-serif; } .metric .sub { color:var(--muted); font-size:.86rem; }
+        .grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:18px; } .s8 { grid-column:span 8; } .s4 { grid-column:span 4; } .s6 { grid-column:span 6; } .s12 { grid-column:span 12; }
+        .section { padding:20px; } .sec-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:15px; } .sec-head h4 { margin:0; font:700 1.12rem 'Space Grotesk',sans-serif; } .sec-head p { margin:4px 0 0; color:var(--muted); font-size:.88rem; }
+        .job,.ibox { padding:18px; } .job + .job,.ibox + .ibox,.review + .review,.history + .history { margin-top:14px; }
+        .job-top,.review,.history { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+        .title { margin:0; font-size:1rem; font-weight:800; } .muted { color:var(--muted); font-size:.88rem; } .price { font-size:1.18rem; font-weight:800; color:var(--brand2); white-space:nowrap; }
+        .tag { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:#fcfaf6; color:var(--ink); font-size:.82rem; font-weight:700; text-decoration:none; }
+        .empty { text-align:center; padding:28px 18px; border-radius:22px; border:1px dashed rgba(31,41,55,.16); color:var(--muted); background:rgba(255,255,255,.45); }
+        .alertx { display:none; margin-bottom:14px; padding:14px 16px; border-radius:16px; font-weight:700; } .alertx.ok { display:block; background:var(--okbg); color:var(--ok); } .alertx.bad { display:block; background:var(--badbg); color:var(--bad); }
+        .pref-list { display:grid; gap:12px; }
+        .pref-item { display:flex; justify-content:space-between; gap:14px; align-items:flex-start; border:1px solid var(--line); border-radius:18px; padding:16px 18px; background:rgba(248,250,252,.72); }
+        .pref-item h5 { margin:0 0 4px; font-size:.96rem; font-weight:800; }
+        .pref-item p { margin:0; color:var(--muted); font-size:.84rem; line-height:1.45; }
+        .toggle { width:46px; height:24px; accent-color:var(--brand); flex-shrink:0; margin-top:2px; }
+        .mobile-toggle { display:none; }
+        @media (max-width:1100px) {
+            .shell { grid-template-columns:1fr; }
+            .sidebar { position:fixed; left:-320px; top:0; width:300px; max-width:86vw; transition:left .28s ease; box-shadow:0 20px 50px rgba(15,23,42,.22); }
+            .sidebar.show { left:0; }
+            .profile { grid-template-columns:auto 1fr; }
+            .hero-grid,.metrics,.grid { grid-template-columns:1fr; }
+            .s8,.s4,.s6,.s12 { grid-column:span 1; }
+            .topbar { flex-direction:column; align-items:flex-start; }
+            .topbar-actions { width:100%; justify-content:space-between; }
+            .bell-menu { width:min(92vw,360px); }
+            .mobile-toggle { display:inline-flex; }
+            .content { padding:22px 18px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <aside class="sidebar" id="sidebar">
+            <a href="#" class="brand">
+                <div class="brand-mark"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                <div><h1>Fix Near</h1><p class="small">Technician operations</p></div>
+            </a>
+            <div class="profile">
+                <div class="avatar">
+                    {% if user.profile_image %}<img src="{{ url_for('static', filename='uploads/' + user.profile_image) }}" alt="Profile">{% else %}{{ user.name[0]|upper }}{% endif %}
+                </div>
+                <div class="profile-meta">
+                    <h2>{{ user.name }}</h2>
+                    <p class="small">{{ tech_profile.service_name }} specialist</p>
+                </div>
+                <div class="profile-status"><span class="pill {{ display_status }}">{{ display_status }}</span></div>
+            </div>
+            <div class="sidebar-main">
+                <div class="sidebar-nav">
+                    <div class="navhd">Workspace</div>
+                    <a href="#" class="nav-link-hub active" data-tab="overview"><i class="fa-solid fa-house"></i> Overview</a>
+                    <a href="#" class="nav-link-hub" data-tab="requests"><i class="fa-solid fa-bolt"></i> Requests</a>
+                    <a href="#" class="nav-link-hub" data-tab="jobs"><i class="fa-solid fa-briefcase"></i> Active Jobs</a>
+                    <a href="#" class="nav-link-hub" data-tab="history"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
+                    <a href="#" class="nav-link-hub" data-tab="reviews"><i class="fa-solid fa-star"></i> Reviews</a>
+                    <a href="#" class="nav-link-hub" data-tab="settings"><i class="fa-solid fa-gear"></i> Settings</a>
+                </div>
+                <div>
+                    <div class="navhd">Account</div>
+                    <div class="logout-box">
+                        <a href="{{ url_for('logout') }}" class="logout-link"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="content">
+            <div class="topbar">
+                <div class="head">
+                    <button class="ghost mobile-toggle" type="button" id="toggleSidebar"><i class="fa-solid fa-bars"></i></button>
+                    <h2 id="pageTitle">Technician Overview</h2>
+                    <p id="pageSubtitle">Track requests, manage live jobs, and stay on top of service quality.</p>
+                </div>
+                <div class="topbar-actions">
+                    <div class="bell-wrap" id="notifDropdown">
+                        <button class="bell-btn" type="button" id="notifBell" aria-label="Notifications">
+                            <i class="fa-regular fa-bell"></i>
+                            {% if unread_notifications > 0 %}
+                            <span class="bell-count">{{ unread_notifications }}</span>
+                            {% endif %}
+                        </button>
+                        <div class="bell-menu">
+                            <div class="bell-head">
+                                <div>
+                                    <div class="title">Notifications</div>
+                                    <div class="muted">{{ unread_notifications }} unread update{{ '' if unread_notifications == 1 else 's' }}</div>
+                                </div>
+                                {% if unread_notifications > 0 %}
+                                <button class="btnx soft" type="button" onclick="markAllNotificationsRead()">Mark all read</button>
+                                {% endif %}
+                            </div>
+                            {% if recent_notifications %}
+                            <div class="bell-list">
+                                {% for note in recent_notifications %}
+                                <div class="bell-item {{ 'unread' if not note.is_read else '' }}">
+                                    <div class="title">{{ note.title }}</div>
+                                    <p class="muted mt-2 mb-2">{{ note.message }}</p>
+                                    <div class="rowx">
+                                        <span class="tag"><i class="fa-regular fa-clock"></i> {{ note.created_at.strftime('%d %b %Y, %I:%M %p') if note.created_at else '' }}</span>
+                                        {% if not note.is_read %}
+                                        <button class="btnx brand" type="button" onclick="markNotificationRead({{ note.id }})">Mark Read</button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="bell-empty">
+                                <i class="fa-regular fa-bell-slash"></i>
+                                No notifications yet.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span class="pill {{ display_status }}">{{ display_status }}</span>
+                </div>
+            </div>
+
+            <section class="tab-pane-hub" id="tab-overview">
+                <div class="hero">
+                    <div class="hero-grid">
+                        <div>
+                            <h3>Fast field control, cleaner daily flow.</h3>
+                            <p>This page shows technician requests, today's jobs, active work, earnings, and account tools connected with the backend.</p>
+                            <div class="rowx avail">
+                                <button class="chip chip-on {% if is_active_toggle %}current{% endif %}" type="button" onclick="updateAvailability('active')">Turn Active</button>
+                                <button class="chip chip-off {% if not is_active_toggle %}current{% endif %}" type="button" onclick="updateAvailability('inactive')">Turn Inactive</button>
+                            </div>
+                        </div>
+                            <div class="hero-stats">
+                                <div class="hero-stat"><b>{{ request_jobs }}</b><span>Assigned requests</span></div>
+                                <div class="hero-stat"><b>{{ active_jobs }}</b><span>Live jobs</span></div>
+                                <div class="hero-stat"><b>{{ avg_rating }}</b><span>Average rating</span></div>
+                            </div>
+                    </div>
+                </div>
+
+                <div class="metrics">
+                    <div class="metric"><div class="eyebrow">Today</div><div class="val">{{ today_jobs|length }}</div><div class="sub">jobs scheduled today</div></div>
+                    <div class="metric"><div class="eyebrow">Today Earnings</div><div class="val">Rs {{ '{:,.0f}'.format(today_earnings|float) }}</div><div class="sub">completed today</div></div>
+                    <div class="metric"><div class="eyebrow">This Month</div><div class="val">Rs {{ '{:,.0f}'.format(month_earnings|float) }}</div><div class="sub">earned this month</div></div>
+                    <div class="metric"><div class="eyebrow">Completed</div><div class="val">{{ completed_jobs }}</div><div class="sub">jobs finished</div></div>
+                </div>
+
+                <div class="grid">
+                    <div class="s8">
+                        <div class="card section">
+                            <div class="sec-head">
+                                <div><h4>Priority Requests</h4><p>Accept fresh jobs quickly and move them into confirmed status.</p></div>
+                            </div>
+                            {% if request_bookings %}
+                                {% for job in request_bookings[:3] %}
+                                <div class="job">
+                                    <div class="job-top">
+                                        <div>
+                                            <p class="title">{{ job.service_name }} for {{ job.customer_name }}</p>
+                                            <div class="muted">{{ job.address }}{% if job.city %}, {{ job.city }}{% endif %}</div>
+                                        </div>
+                                        <div class="price">Rs {{ '{:,.0f}'.format(job.total_price) }}</div>
+                                    </div>
+                                    <div class="rowx mt-3">
+                                        <span class="tag"><i class="fa-regular fa-calendar"></i> {{ job.booking_date.strftime('%d %b %Y') if job.booking_date else 'Date pending' }}</span>
+                                        <span class="tag"><i class="fa-regular fa-clock"></i> {{ job.time_slot }}</span>
+                                        <a class="tag" href="tel:{{ job.customer_phone }}"><i class="fa-solid fa-phone"></i> {{ job.customer_phone }}</a>
+                                        <span class="pill {{ job.status }}">{{ job.status|replace('_', ' ') }}</span>
+                                    </div>
+                                    {% if job.notes %}<p class="muted mt-3 mb-0">{{ job.notes }}</p>{% endif %}
+                                    <div class="rowx mt-3">
+                                        {% if job.status == 'pending' %}
+                                        <button class="btnx brand" type="button" onclick="updateJob({{ job.id }}, 'confirmed')">Accept Request</button>
+                                        <button class="btnx bad" type="button" onclick="updateJob({{ job.id }}, 'cancelled')">Decline</button>
+                                        {% elif job.status == 'confirmed' %}
+                                        <button class="btnx warn" type="button" onclick="updateJob({{ job.id }}, 'in_progress')">Start Job</button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty">No assigned requests right now.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="s4">
+                        <div class="card section">
+                            <div class="sec-head">
+                                <div><h4>Today Board</h4><p>Your closest service commitments.</p></div>
+                            </div>
+                            {% if today_jobs %}
+                                {% for job in today_jobs %}
+                                <div class="ibox">
+                                    <div class="title">{{ job.customer_name }}</div>
+                                    <div class="muted mt-1">{{ job.service_name }}</div>
+                                    <div class="rowx mt-3">
+                                        <span class="tag">{{ job.time_slot }}</span>
+                                        <span class="pill {{ job.status }}">{{ job.status|replace('_', ' ') }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty">No jobs scheduled for today.</div>
+                            {% endif %}
+                        </div>
+                        <div class="card section" style="margin-top:14px">
+                            <div class="sec-head">
+                                <div><h4>Readiness Snapshot</h4><p>Operational signals that help you stay assignable.</p></div>
+                            </div>
+                            <div class="ibox">
+                                <div class="title">Availability mode</div>
+                                <p class="muted mt-2 mb-2">Your live status controls whether admin can confidently assign fresh jobs.</p>
+                                <span class="pill {{ display_status }}">{{ display_status }}</span>
+                            </div>
+                            <div class="ibox">
+                                <div class="title">Unread updates</div>
+                                <p class="muted mt-2 mb-2">Open the top bell anytime for assignments, cancellations, and workflow changes.</p>
+                                <div class="price">{{ unread_notifications }}</div>
+                            </div>
+                            <div class="ibox">
+                                <div class="title">Request pressure</div>
+                                <p class="muted mt-2 mb-2">Pending and confirmed jobs waiting on your next action.</p>
+                                <div class="price">{{ request_jobs }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tab-pane-hub" id="tab-requests" style="display:none">
+                <div class="card section">
+                    <div class="sec-head">
+                        <div><h4>Incoming Requests</h4><p>Assigned jobs stay here until you accept them or start them.</p></div>
+                    </div>
+                    {% if request_bookings %}
+                        {% for job in request_bookings %}
+                        <div class="job">
+                            <div class="job-top">
+                                <div>
+                                    <p class="title">{{ job.service_name }} for {{ job.customer_name }}</p>
+                                    <div class="muted">{{ job.address }}{% if job.city %}, {{ job.city }}{% endif %}</div>
+                                </div>
+                                <div class="price">Rs {{ '{:,.0f}'.format(job.total_price) }}</div>
+                            </div>
+                            <div class="rowx mt-3">
+                                <span class="tag"><i class="fa-regular fa-calendar"></i> {{ job.booking_date.strftime('%d %b %Y') if job.booking_date else '' }}</span>
+                                <span class="tag"><i class="fa-regular fa-clock"></i> {{ job.time_slot }}</span>
+                                <a class="tag" href="tel:{{ job.customer_phone }}"><i class="fa-solid fa-phone"></i> Call customer</a>
+                                <span class="pill {{ job.status }}">{{ job.status|replace('_', ' ') }}</span>
+                                {% if job.attachment %}<a class="tag" href="{{ url_for('static', filename='uploads/' + job.attachment) }}" target="_blank"><i class="fa-solid fa-paperclip"></i> Attachment</a>{% endif %}
+                            </div>
+                            {% if job.notes %}<p class="muted mt-3 mb-0">{{ job.notes }}</p>{% endif %}
+                            <div class="rowx mt-3">
+                                {% if job.status == 'pending' %}
+                                <button class="btnx brand" type="button" onclick="updateJob({{ job.id }}, 'confirmed')">Accept</button>
+                                <button class="btnx bad" type="button" onclick="updateJob({{ job.id }}, 'cancelled')">Decline</button>
+                                {% elif job.status == 'confirmed' %}
+                                <button class="btnx warn" type="button" onclick="updateJob({{ job.id }}, 'in_progress')">Start Job</button>
+                                <button class="btnx bad" type="button" onclick="updateJob({{ job.id }}, 'cancelled')">Cancel</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty">All clear. No assigned requests are waiting right now.</div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="tab-pane-hub" id="tab-jobs" style="display:none">
+                <div class="grid">
+                    <div class="s8">
+                        <div class="card section">
+                            <div class="sec-head">
+                                <div><h4>Active Jobs</h4><p>Progress work from confirmed to in progress to completed.</p></div>
+                            </div>
+                            {% if confirmed_bookings or in_progress_bookings %}
+                                {% for job in confirmed_bookings %}
+                                <div class="job">
+                                    <div class="job-top">
+                                        <div>
+                                            <p class="title">{{ job.customer_name }} is scheduled</p>
+                                            <div class="muted">{{ job.service_name }} | {{ job.address }}</div>
+                                        </div>
+                                        <span class="pill confirmed">confirmed</span>
+                                    </div>
+                                    <div class="rowx mt-3">
+                                        <span class="tag"><i class="fa-regular fa-calendar"></i> {{ job.booking_date.strftime('%d %b %Y') if job.booking_date else '' }}</span>
+                                        <span class="tag"><i class="fa-regular fa-clock"></i> {{ job.time_slot }}</span>
+                                        <a class="tag" href="tel:{{ job.customer_phone }}"><i class="fa-solid fa-phone"></i> {{ job.customer_phone }}</a>
+                                    </div>
+                                    <div class="rowx mt-3">
+                                        <button class="btnx warn" type="button" onclick="updateJob({{ job.id }}, 'in_progress')">Start Job</button>
+                                        <button class="btnx bad" type="button" onclick="updateJob({{ job.id }}, 'cancelled')">Cancel</button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% for job in in_progress_bookings %}
+                                <div class="job">
+                                    <div class="job-top">
+                                        <div>
+                                            <p class="title">{{ job.service_name }} in progress</p>
+                                            <div class="muted">{{ job.customer_name }} | {{ job.address }}</div>
+                                        </div>
+                                        <span class="pill in_progress">in progress</span>
+                                    </div>
+                                    <div class="rowx mt-3">
+                                        <span class="tag"><i class="fa-solid fa-indian-rupee-sign"></i> Rs {{ '{:,.0f}'.format(job.total_price) }}</span>
+                                        <a class="tag" href="tel:{{ job.customer_phone }}"><i class="fa-solid fa-phone"></i> Call customer</a>
+                                    </div>
+                                    {% if job.notes %}<p class="muted mt-3 mb-0">{{ job.notes }}</p>{% endif %}
+                                    <div class="rowx mt-3">
+                                        <button class="btnx ok" type="button" onclick="updateJob({{ job.id }}, 'completed')">Mark Completed</button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty">No active jobs yet. Accept a request to start your workday.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="s4">
+                        <div class="card section">
+                            <div class="sec-head">
+                                <div><h4>Workload Mix</h4><p>Quick operating snapshot.</p></div>
+                            </div>
+                            <div class="ibox"><div class="title">Pending</div><div class="price">{{ pending_bookings|length }}</div></div>
+                            <div class="ibox"><div class="title">Confirmed</div><div class="price">{{ confirmed_bookings|length }}</div></div>
+                            <div class="ibox"><div class="title">In Progress</div><div class="price">{{ in_progress_bookings|length }}</div></div>
+                            <div class="ibox"><div class="title">Cancelled</div><div class="price">{{ cancelled_bookings|length }}</div></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tab-pane-hub" id="tab-history" style="display:none">
+                <div class="grid">
+                    <div class="s8">
+                        <div class="card section">
+                            <div class="sec-head">
+                                <div><h4>Completed Jobs</h4><p>Recent finished work, customer trail, and payout visibility.</p></div>
+                            </div>
+                            {% if completed_list %}
+                                {% for job in completed_list %}
+                                <div class="job history">
+                                    <div>
+                                        <div class="title">{{ job.service_name }} for {{ job.customer_name }}</div>
+                                        <div class="muted">{{ job.booking_date.strftime('%d %b %Y') if job.booking_date else '' }} | {{ job.address }}</div>
+                                        <div class="rowx mt-3">
+                                            <a class="tag" href="tel:{{ job.customer_phone }}"><i class="fa-solid fa-phone"></i> {{ job.customer_phone }}</a>
+                                            <span class="tag"><i class="fa-regular fa-clock"></i> {{ job.time_slot }}</span>
+                                            <span class="pill completed">completed</span>
+                                        </div>
+                                    </div>
+                                    <div class="price">Rs {{ '{:,.0f}'.format(job.total_price) }}</div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty">No completed jobs yet.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="s4">
+                        <div class="card section">
+                            <div class="sec-head">
+                                <div><h4>Career Snapshot</h4><p>High-level performance numbers.</p></div>
+                            </div>
+                            <div class="ibox"><div class="title">Lifetime earnings</div><div class="price">Rs {{ '{:,.0f}'.format(earnings|float) }}</div></div>
+                            <div class="ibox"><div class="title">Completed jobs</div><div class="price">{{ completed_jobs }}</div></div>
+                            <div class="ibox"><div class="title">Rating</div><div class="price">{{ avg_rating }}</div></div>
+                            {% if service_history %}
+                            <div class="ibox">
+                                <div class="title">Service mix</div>
+                                <div class="rowx mt-3">
+                                    {% for item in service_history %}
+                                    <span class="tag">{{ item.service_name }} | {{ item.total_jobs }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="card section" style="margin-top:14px">
+                            <div class="sec-head">
+                                <div><h4>Customers Served</h4><p>See which customers you handled most often.</p></div>
+                            </div>
+                            {% if customer_history %}
+                                {% for item in customer_history %}
+                                <div class="ibox">
+                                    <div class="title">{{ item.customer_name }}</div>
+                                    <p class="muted mt-2 mb-2">{{ item.total_jobs }} job{{ '' if item.total_jobs == 1 else 's' }} handled | {{ item.completed_jobs }} completed | {{ item.active_jobs }} active</p>
+                                    <div class="rowx">
+                                        <a class="tag" href="tel:{{ item.customer_phone }}"><i class="fa-solid fa-phone"></i> {{ item.customer_phone }}</a>
+                                        <span class="tag"><i class="fa-regular fa-calendar"></i> {{ item.last_service_date.strftime('%d %b %Y') if item.last_service_date else 'Date pending' }}</span>
+                                        <span class="tag"><i class="fa-solid fa-indian-rupee-sign"></i> Rs {{ '{:,.0f}'.format(item.total_billed) }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="empty">Customer service history will appear here once jobs start getting assigned.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tab-pane-hub" id="tab-reviews" style="display:none">
+                <div class="card section">
+                    <div class="sec-head">
+                        <div><h4>Customer Reviews</h4><p>Your recent service feedback.</p></div>
+                    </div>
+                    {% if my_reviews %}
+                        {% for review in my_reviews %}
+                        <div class="job review">
+                            <div>
+                                <div class="title">{{ review.customer_name }}</div>
+                                <div class="rating-stars">{% for _ in range(review.rating) %}<i class="fa-solid fa-star"></i>{% endfor %}</div>
+                                <p class="muted mt-2 mb-0">{{ review.comment or 'Customer left a rating without a written comment.' }}</p>
+                            </div>
+                            <div class="muted">{{ review.created_at.strftime('%d %b %Y') if review.created_at else '' }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty">No reviews yet. Completed jobs with great service will show up here.</div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="tab-pane-hub" id="tab-settings" style="display:none">
+                <div class="grid">
+                    <div class="s6">
+                        <div class="card section">
+                            <div class="sec-head">
+                                <div><h4>Profile</h4><p>Keep your technician details accurate.</p></div>
+                            </div>
+                            <div id="profileAlert" class="alertx"></div>
+                            <form id="profileForm">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Full name</label>
+                                    <input class="form-control" name="name" value="{{ user.name }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Email</label>
+                                    <input class="form-control" type="email" name="email" value="{{ user.email }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Phone</label>
+                                    <input class="form-control" name="phone" value="{{ user.phone }}" required>
+                                </div>
+                                <button class="btnx brand" type="submit">Save Profile</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="s6">
+                        <div class="card section">
+                            <div class="sec-head">
+                                <div><h4>Security & Photo</h4><p>Change your password and profile image.</p></div>
+                            </div>
+                            <div id="securityAlert" class="alertx"></div>
+                            <form id="avatarForm" class="mb-4" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Profile image</label>
+                                    <input class="form-control" type="file" name="profile_image" accept="image/*" required>
+                                </div>
+                                <button class="btnx soft" type="submit">Upload Photo</button>
+                            </form>
+                            <form id="passwordForm">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Current password</label>
+                                    <input class="form-control" type="password" name="current_password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">New password</label>
+                                    <input class="form-control" type="password" name="new_password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Confirm password</label>
+                                    <input class="form-control" type="password" name="confirm_password" required>
+                                </div>
+                                <button class="btnx brand" type="submit">Change Password</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="s12">
+                        <div class="card section">
+                            <div class="sec-head">
+                                <div><h4>Notification Preferences</h4><p>See updates from the top bell and control which alerts should reach you.</p></div>
+                            </div>
+                            <div id="notificationAlert" class="alertx"></div>
+                            <form id="notificationPrefsForm" class="pref-list">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="pref-item">
+                                    <div>
+                                        <h5>Booking Updates</h5>
+                                        <p>Fresh bookings, approval changes, and service completion milestones.</p>
+                                    </div>
+                                    <input class="toggle" type="checkbox" name="booking_updates" {{ 'checked' if notification_preferences.booking_updates else '' }}>
+                                </div>
+                                <div class="pref-item">
+                                    <div>
+                                        <h5>Assignment Updates</h5>
+                                        <p>Technician assignment changes, cancellations, and operational task alerts.</p>
+                                    </div>
+                                    <input class="toggle" type="checkbox" name="assignment_updates" {{ 'checked' if notification_preferences.assignment_updates else '' }}>
+                                </div>
+                                <div class="pref-item">
+                                    <div>
+                                        <h5>System Updates</h5>
+                                        <p>Platform-wide notices that affect your availability, jobs, or workflow.</p>
+                                    </div>
+                                    <input class="toggle" type="checkbox" name="system_updates" {{ 'checked' if notification_preferences.system_updates else '' }}>
+                                </div>
+                                <div class="pref-item">
+                                    <div>
+                                        <h5>Email Mirror</h5>
+                                        <p>Keep future email delivery enabled whenever in-app alerts expand outside the dashboard.</p>
+                                    </div>
+                                    <input class="toggle" type="checkbox" name="email_notifications" {{ 'checked' if notification_preferences.email_notifications else '' }}>
+                                </div>
+                                <button class="btnx brand" type="submit">Save Notification Preferences</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const csrfToken = '{{ csrf_token() }}';
+
+        function withCsrfHeaders(headers = {}) {
+            return Object.assign({}, headers, { 'X-CSRF-Token': csrfToken });
+        }
+
+        const tabMeta = {
+            overview: ['Technician Overview', 'Track requests, manage live jobs, and stay on top of service quality.'],
+            requests: ['Incoming Requests', 'Review fresh assignments and respond fast.'],
+            jobs: ['Active Jobs', 'Move confirmed jobs into progress and then completion.'],
+            history: ['Job History', 'See your recent completed jobs and earnings.'],
+            reviews: ['Customer Reviews', 'Read feedback from your completed jobs.'],
+            settings: ['Settings', 'Manage profile, security, and notification preferences.']
+        };
+
+        const notifDropdown = document.getElementById('notifDropdown');
+        const notifBell = document.getElementById('notifBell');
+        notifBell?.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            notifDropdown.classList.toggle('open');
+        });
+        document.addEventListener('click', (event) => {
+            if (notifDropdown && !notifDropdown.contains(event.target)) {
+                notifDropdown.classList.remove('open');
+            }
+        });
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-pane-hub').forEach((pane) => pane.style.display = 'none');
+            document.querySelectorAll('.nav-link-hub[data-tab]').forEach((link) => link.classList.remove('active'));
+            document.getElementById('tab-' + tab).style.display = 'block';
+            document.querySelector(`.nav-link-hub[data-tab="${tab}"]`).classList.add('active');
+            document.getElementById('pageTitle').textContent = tabMeta[tab][0];
+            document.getElementById('pageSubtitle').textContent = tabMeta[tab][1];
+            document.getElementById('sidebar').classList.remove('show');
+        }
+
+        document.querySelectorAll('.nav-link-hub[data-tab]').forEach((link) => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                switchTab(link.dataset.tab);
+            });
+        });
+
+        document.getElementById('toggleSidebar').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('show');
+        });
+
+        function showAlert(id, ok, message) {
+            const box = document.getElementById(id);
+            box.className = 'alertx ' + (ok ? 'ok' : 'bad');
+            box.textContent = message;
+        }
+
+        function postForm(url, formData) {
+            return fetch(url, { method: 'POST', body: formData }).then((response) => response.json());
+        }
+
+        function updateJob(id, status) {
+            const body = new URLSearchParams({ booking_id: id, status });
+            fetch('{{ url_for("api_update_job") }}', {
+                method: 'POST',
+                headers: withCsrfHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
+                body
+            }).then((response) => response.json()).then((data) => {
+                if (!data.success) {
+                    alert(data.message);
+                    return;
+                }
+                window.location.reload();
+            }).catch(() => alert('Could not update the job right now.'));
+        }
+
+        function updateAvailability(status) {
+            const body = new URLSearchParams({ status });
+            fetch('{{ url_for("api_update_availability") }}', {
+                method: 'POST',
+                headers: withCsrfHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
+                body
+            }).then((response) => response.json()).then((data) => {
+                if (!data.success) {
+                    alert(data.message);
+                    return;
+                }
+                window.location.reload();
+            }).catch(() => alert('Could not update availability right now.'));
+        }
+
+        function markNotificationRead(id) {
+            const body = new URLSearchParams({ notification_id: id });
+            fetch('{{ url_for("api_mark_notification_read") }}', {
+                method: 'POST',
+                headers: withCsrfHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
+                body
+            }).then((response) => response.json()).then((data) => {
+                if (data.success) window.location.reload();
+            });
+        }
+
+        function markAllNotificationsRead() {
+            const body = new URLSearchParams({ mark_all: '1' });
+            fetch('{{ url_for("api_mark_notification_read") }}', {
+                method: 'POST',
+                headers: withCsrfHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
+                body
+            }).then((response) => response.json()).then((data) => {
+                if (data.success) window.location.reload();
+            });
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            postForm('{{ url_for("api_update_profile") }}', new FormData(this)).then((data) => {
+                showAlert('profileAlert', data.success, data.message);
+                if (data.success) setTimeout(() => window.location.reload(), 500);
+            }).catch(() => showAlert('profileAlert', false, 'Profile update failed.'));
+        });
+
+        document.getElementById('avatarForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            postForm('{{ url_for("api_upload_profile_image") }}', new FormData(this)).then((data) => {
+                showAlert('securityAlert', data.success, data.message);
+                if (data.success) setTimeout(() => window.location.reload(), 500);
+            }).catch(() => showAlert('securityAlert', false, 'Photo upload failed.'));
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            postForm('{{ url_for("api_change_password") }}', new FormData(this)).then((data) => {
+                showAlert('securityAlert', data.success, data.message);
+                if (data.success) this.reset();
+            }).catch(() => showAlert('securityAlert', false, 'Password change failed.'));
+        });
+
+        document.getElementById('notificationPrefsForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            postForm('{{ url_for("api_update_notification_preferences") }}', new FormData(this)).then((data) => {
+                showAlert('notificationAlert', data.success, data.message);
+            }).catch(() => showAlert('notificationAlert', false, 'Notification preferences could not be saved.'));
+        });
+    </script>
+</body>
+</html>

@@ -1,41 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Get in touch with FixNear. We'd love to hear from you.">
-  <title>Contact Us — FixNear</title>
+  <title>Contact Us - FixNear</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <style>
-    .contact-page { padding-top: 100px; min-height: 100vh; background: var(--off-white); padding-bottom: 60px; }
-    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 960px; margin: 0 auto; }
-    .contact-info { background: var(--dark); border-radius: var(--radius-xl); padding: 40px; color: #fff; }
-    .contact-info h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 8px; }
-    .contact-info > p { color: #94a3b8; font-size: .88rem; margin-bottom: 30px; }
-    .contact-info-item { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
-    .contact-info-item .icon { width: 42px; height: 42px; border-radius: 10px; background: rgba(59,130,246,.15); color: #3b82f6; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .contact-info-item h4 { font-size: .88rem; font-weight: 600; color: #f1f5f9; }
-    .contact-info-item p { font-size: .8rem; color: #94a3b8; margin-top: 2px; }
-    .contact-form-card { background: var(--white); border-radius: var(--radius-xl); padding: 40px; box-shadow: var(--shadow-lg); border: 1px solid rgba(226,232,240,.5); }
-    .contact-form-card h2 { font-size: 1.4rem; font-weight: 800; color: var(--dark); margin-bottom: 6px; }
-    .contact-form-card > p { color: var(--text-muted); font-size: .88rem; margin-bottom: 24px; }
-    .contact-form-card .form-group textarea {
-      width: 100%; padding: 13px 16px; border: 1.5px solid var(--light-gray);
-      border-radius: var(--radius-md); font-family: inherit; font-size: .92rem;
-      color: var(--text-primary); background: var(--off-white); resize: vertical; min-height: 120px; outline: none;
-    }
-    .contact-form-card .form-group textarea:focus { border-color: var(--primary); background: var(--white); box-shadow: 0 0 0 4px rgba(26,86,219,.1); }
-    .alert { padding: 14px 20px; border-radius: var(--radius-md); margin-bottom: 20px; font-size: .88rem; font-weight: 500; }
-    .alert--success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-    .alert--error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-    @media (max-width: 768px) { .contact-grid { grid-template-columns: 1fr; } }
-  </style>
 </head>
 <body>
   <!-- NAVBAR -->
   <nav class="navbar scrolled" id="navbar">
-    <div class="container">
+    <div class="container navbar__inner">
       <a href="{{ url_for('home') }}" class="navbar__logo">Fix<span>Near</span></a>
       <div class="navbar__links" id="navLinks">
         <a href="{{ url_for('home') }}">Home</a>
@@ -52,28 +28,30 @@
     </div>
   </nav>
 
-  <section class="contact-page">
+  <section class="contact-page contact-page--standalone" id="contact">
     <div class="container">
-      <div class="contact-grid">
+      <div class="contact-dashboard">
         <!-- Info -->
         <div class="contact-info">
           <h2>Get In Touch</h2>
           <p>Have questions or need help? We'd love to hear from you.</p>
-          <div class="contact-info-item">
-            <div class="icon"><i class="fas fa-envelope"></i></div>
-            <div><h4>Email Us</h4><p>support@fixnear.com</p></div>
-          </div>
-          <div class="contact-info-item">
-            <div class="icon"><i class="fas fa-phone"></i></div>
-            <div><h4>Call Us</h4><p>+91 12345 67890</p></div>
-          </div>
-          <div class="contact-info-item">
-            <div class="icon"><i class="fas fa-location-dot"></i></div>
-            <div><h4>Visit Us</h4><p>New Delhi, India</p></div>
-          </div>
-          <div class="contact-info-item">
-            <div class="icon"><i class="fas fa-clock"></i></div>
-            <div><h4>Working Hours</h4><p>Mon-Sat: 8 AM - 9 PM</p></div>
+          <div class="contact-info-list">
+            <div class="contact-info-item">
+              <div class="icon"><i class="fas fa-envelope"></i></div>
+              <div><h4>Email Us</h4><p>support@fixnear.com</p></div>
+            </div>
+            <div class="contact-info-item">
+              <div class="icon"><i class="fas fa-phone"></i></div>
+              <div><h4>Call Us</h4><p>+91 12345 67890</p></div>
+            </div>
+            <div class="contact-info-item">
+              <div class="icon"><i class="fas fa-location-dot"></i></div>
+              <div><h4>Visit Us</h4><p>New Delhi, India</p></div>
+            </div>
+            <div class="contact-info-item">
+              <div class="icon"><i class="fas fa-clock"></i></div>
+              <div><h4>Working Hours</h4><p>Mon-Sat: 8 AM - 9 PM</p></div>
+            </div>
           </div>
         </div>
 
@@ -89,6 +67,7 @@
           {% endwith %}
 
           <form action="{{ url_for('contact') }}" method="POST" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
               <label for="name">Your Name</label>
               <div class="input-wrapper"><i class="fas fa-user"></i><input type="text" id="name" name="name" placeholder="John Doe" required></div>
@@ -105,7 +84,7 @@
               <label for="message">Message</label>
               <textarea id="message" name="message" placeholder="Write your message..." required></textarea>
             </div>
-            <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:8px">
+            <button type="submit" class="btn btn-primary btn-full btn-lg">
               <i class="fas fa-paper-plane"></i> Send Message
             </button>
           </form>
